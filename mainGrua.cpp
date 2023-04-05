@@ -17,6 +17,8 @@
 
 #define UNIDADE_GRAO_EN_RADIANS 0.0174533f
 
+#define ACELERACION 0.004f
+
 
 void processInput(GLFWwindow* window);
 
@@ -39,7 +41,14 @@ float radio = 3.0f;
 float alpha = M_PI / 2.0f;
 float beta = M_PI / 4.0f;
 
-float acceleration = 0.1f; // Valor de aceleración
+float vx = 0;
+float vz = 0;
+
+float vxInicial = 0;
+float vzInicial = 0;
+
+float acceleration = 0; // Valor de aceleración
+float rozamento = 0.00005f;
 float deltaTime = 0.0f;    // Intervalo de tiempo desde la última actualización
 float previousTime = 0;
 bool empezar = true;
@@ -48,9 +57,7 @@ typedef struct {
 	//Posicion inicial
 	float px, py, pz;
 	// Xiros da grua con respecto ao eixo y
-	float angulo_grua;
-	// Xiro das articulacions con respecto a x
-	float angulo1, angulo2;
+	float angulo_x, angulo_y, angulo_z;
 	// Escalado nos eixos
 	float sx, sy, sz;
 	// VAO
@@ -58,9 +65,9 @@ typedef struct {
 } obxecto;
 
 obxecto base = { 0, 0.1f, 0, 0, 0, 0, 0.3f, 0.2f, 0.4f, 0 };
-obxecto art1 = { 0, 0.05f, 0.0f, 0, M_PI / 6.0f, 0, 0.1f, 0.1f, 0.1f, 0 };
+obxecto art1 = { 0, 0.05f, 0.0f, M_PI / 6.0f, 0, 0, 0.1f, 0.1f, 0.1f, 0 };
 obxecto brazo1 = { 0, 0.35f, 0.0f, 0, 0, 0, 0.06f, 0.7f, 0.06f, 0 };
-obxecto art2 = { 0, 0.35f, 0.0f, 0, 0, 0 / 4.0f, 0.06f, 0.06f, 0.06f, 0 };
+obxecto art2 = { 0, 0.35f, 0.0f, M_PI / 4.0f, 0, 0, 0.06f, 0.06f, 0.06f, 0 };
 obxecto brazo2 = { 0, 0.2f, 0.0f, 0, 0, 0, 0.04f, 0.4f, 0.04f, 0 };
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -335,20 +342,51 @@ void debuxaEsfera() {
 
 }
 
-void actualizarPosicion(float* x, float* z, float angulo) {
-	// Calcular la velocidad del cubo en función de la aceleración y el tiempo delta
-	float vx = cos(angulo) * acceleration * deltaTime;
-	float vz = sin(angulo) * acceleration * deltaTime;
 
-	// Actualizar la posición del cubo en función de la velocidad
-	*x += vx;
-	*z += vz;
+void actualizarPosicion(float* x, float* z, float angulo) {
+	float tempvx, tempvz;
+
+	// No caso no que se esta pisando o acelerador
+	if (acceleration > 0) {
+		// Calcular a velocidade da grua en función da aceleración 
+		// e do tempo que se leva pisando o acelerador
+		tempvx = vxInicial + sin(angulo) * acceleration * deltaTime;
+		tempvz = vzInicial + cos(angulo) * acceleration * deltaTime;
+	}
+	else { 
+		// No caso no que deixamos de acelerar a 
+		// velocidade permanece constante se obviamos 
+		// a forza de rozamento
+		tempvx = vx;
+		tempvz = vz;
+	}
+
+	// Limitamos o valor da velocidade para que non 
+	// cambie de signo por culpa da forza de rozamento
+	if (tempvx >= 0) {
+		vx = fmax(tempvx - rozamento, 0);
+	}
+	else {
+		vx = fmin(tempvx + rozamento, 0);
+	}
+	if (tempvz >= 0) {
+		vz = fmax(tempvz - rozamento, 0);
+	}
+	else {
+		vz = fmin(tempvz + rozamento, 0);
+	}
+
+	// Actualizamos a posicion da grua tendo en conta a velocidade
+	*x = fmin(*x + vx, 1.8);
+	*x = fmax(*x + vx, -1.8);
+	*z = fmin(*z + vz, 1.8);
+	*z = fmax(*z + vz, -1.8);
 }
 
 void renderizarBase(int transformLoc, glm::mat4* transform, glm::mat4* transformTemp) {
 	*transform = glm::mat4();
-	*transform = glm::rotate(*transform, (float)base.angulo_grua, glm::vec3(0.0, 1.0, 0.0));
 	*transform = glm::translate(*transform, glm::vec3(base.px, base.py, base.pz));
+	*transform = glm::rotate(*transform, (float)base.angulo_y, glm::vec3(0.0, 1.0, 0.0));
 
 	// Para mover o resto da grua coa base gardamos esta matriz para aplicarlla ao resto das componhentes
 	*transformTemp = *transform;
@@ -361,7 +399,7 @@ void renderizarBase(int transformLoc, glm::mat4* transform, glm::mat4* transform
 void renderizarArt1(int transformLoc, glm::mat4* transform, glm::mat4* transformTemp) {
 	*transform = glm::mat4();
 	*transform = glm::translate(*transform, glm::vec3(art1.px, art1.py, art1.pz));
-	*transform = glm::rotate(*transform, (float)art1.angulo1, glm::vec3(1.0, 0.0, 0.0));
+	*transform = glm::rotate(*transform, (float)art1.angulo_x, glm::vec3(1.0, 0.0, 0.0));
 	*transform = *transformTemp * (*transform);
 
 	*transformTemp = *transform;
@@ -387,7 +425,7 @@ void renderizarBrazo1(int transformLoc, glm::mat4* transform, glm::mat4* transfo
 void renderizarArt2(int transformLoc, glm::mat4* transform, glm::mat4* transformTemp) {
 	*transform = glm::mat4();
 	*transform = glm::translate(*transform, glm::vec3(art2.px, art2.py, art2.pz));
-	*transform = glm::rotate(*transform, (float)art2.angulo2, glm::vec3(1.0, 0.0, 0.0));
+	*transform = glm::rotate(*transform, (float)art2.angulo_x, glm::vec3(1.0, 0.0, 0.0));
 	*transform = *transformTemp * (*transform);
 
 
@@ -483,10 +521,10 @@ int main()
 			vistaXeral(base.px, base.py, base.pz);
 		}
 		else if (terceira) {
-			vistaTerceiraPersoa(base.px, base.py, base.pz, base.angulo_grua);
+			vistaTerceiraPersoa(base.px, base.py, base.pz, base.angulo_y);
 		}
 		else {
-			vistaPrimeiraPersoa(base.px, base.py, base.pz, base.angulo_grua);
+			vistaPrimeiraPersoa(base.px, base.py, base.pz, base.angulo_y);
 		}
 
 		glUseProgram(shaderProgram);
@@ -520,7 +558,7 @@ int main()
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-		actualizarPosicion(&base.px, &base.pz, base.angulo_grua);
+		actualizarPosicion(&base.px, &base.pz, base.angulo_y);
 
 		renderizarBase(transformLoc, &transform, &transformTemp);
 		renderizarArt1(transformLoc, &transform, &transformTemp);
@@ -564,52 +602,71 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 	// Tecla d: xiro da grua a dereita
 	if (key == 68) {
-		base.angulo_grua -= UNIDADE_GRAO_EN_RADIANS;
+		base.angulo_y -= UNIDADE_GRAO_EN_RADIANS;
 	}
 
 	// Tecla a: xiro da grua a esquerda
 	if (key == 65) {
-		base.angulo_grua += UNIDADE_GRAO_EN_RADIANS;
+		base.angulo_y += UNIDADE_GRAO_EN_RADIANS;
 	}
 
 	// Tecla w: acelerador
-	if (key == 87 && action == GLFW_PRESS) {
-		printf("Pulsacion\n");
-
-		// ALGO ASI, REPENSAR, O press so se executa unha vez. Non me vale para o que quero creo
+	if (key == 87) {
 
 		if (previousTime == 0) {
 			previousTime = glfwGetTime();
+			// Comezamos a acelerar (constante)
+			acceleration = ACELERACION;
+			// No caso de que a grua ainda estivera en movemento
+			// tinha unha velocidade que hai que considerar 
+			// e sumarlla a velocidade que se vai ganhar ao 
+			// acelerar de novo
+			vxInicial = vx;
+			vzInicial = vz;
 		}
 
 		// Calcular el tiempo delta desde la última actualización
 		deltaTime = glfwGetTime() - previousTime;
 
+		// Producese cando se deixa de acelerar
+		if (action == GLFW_RELEASE) {
+			previousTime = 0;
+			// Deixamos de acelerar
+			acceleration = 0;
+		}
+
 	}
 
 	// Tecla x: freno
 	if (key == 88) {
+		// Aumentamos o rozamento gradualmente
+		rozamento += 0.00005f;
 
+		// Producese cando se deixa de frear
+		if (action == GLFW_RELEASE) {
+			// Reestablecemos o valor do rozamento
+			rozamento = 0.00005f;
+		}
 	}
 
 	// Tecla r: subimos o primeiro brazo da grua
 	if (key == 82) {
-		art1.angulo1 = fmax(art1.angulo1 - UNIDADE_GRAO_EN_RADIANS, -M_PI / 5.0f);
+		art1.angulo_x = fmax(art1.angulo_x - UNIDADE_GRAO_EN_RADIANS, -M_PI / 5.0f);
 	}
 
 	// Tecla f: baixamos o primeiro brazo da grua
 	if (key == 70) {
-		art1.angulo1 = fmin(art1.angulo1 + UNIDADE_GRAO_EN_RADIANS, M_PI / 5.0f);
+		art1.angulo_x = fmin(art1.angulo_x + UNIDADE_GRAO_EN_RADIANS, M_PI / 5.0f);
 	}
 
 	// Tecla t: subimos o segundo brazo da grua
 	if (key == 84) {
-		art2.angulo2 = fmax(art2.angulo2 - 2.0f * UNIDADE_GRAO_EN_RADIANS, -(2.0f * M_PI) / 3.0f);
+		art2.angulo_x = fmax(art2.angulo_x - 2.0f * UNIDADE_GRAO_EN_RADIANS, -(2.0f * M_PI) / 3.0f);
 	}
 
 	// Tecla g: baixamos o segundo brazo da grua
 	if (key == 71) {
-		art2.angulo2 = fmin(art2.angulo2 + 2.0f * UNIDADE_GRAO_EN_RADIANS, (2.0f * M_PI) / 3.0f);
+		art2.angulo_x = fmin(art2.angulo_x + 2.0f * UNIDADE_GRAO_EN_RADIANS, (2.0f * M_PI) / 3.0f);
 	}
 
 	// Tecla dereita: xiro da camara en vistaXeral a dereita
