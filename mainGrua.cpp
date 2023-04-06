@@ -8,7 +8,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <math.h>
 
-#include "esfera.h"
+#include "Obxecto.h"
+#include "ObxectoMobil.h"
+
 #include "lecturaShader_0_9.h"
 
 #ifndef M_PI
@@ -16,9 +18,6 @@
 #endif
 
 #define UNIDADE_GRAO_EN_RADIANS 0.0174533f
-
-#define ACELERACION 0.004f
-
 
 void processInput(GLFWwindow* window);
 
@@ -41,34 +40,42 @@ float radio = 3.0f;
 float alpha = M_PI / 2.0f;
 float beta = M_PI / 4.0f;
 
-float vx = 0;
-float vz = 0;
-
+// velocidades iniciais da grua
 float vxInicial = 0;
 float vzInicial = 0;
 
-float acceleration = 0; // Valor de aceleración
-float rozamento = 0.00005f;
-float deltaTime = 0.0f;    // Intervalo de tiempo desde la última actualización
-float previousTime = 0;
-bool empezar = true;
+// deltaTime. Intervalo de tempo desde a última aceleracion
+float deltaTime = 0.0f;    
+// previousTime. Momento no que se empezou a acelerar
+float previousTime = 0;	
 
-typedef struct {
-	//Posicion inicial
-	float px, py, pz;
-	// Xiros da grua con respecto ao eixo y
-	float angulo_x, angulo_y, angulo_z;
-	// Escalado nos eixos
-	float sx, sy, sz;
-	// VAO
-	unsigned int listaRender;
-} obxecto;
+float posBase[] = { 0, 0.1f, 0 };
+float escBase[] = { 0.3f, 0.2f, 0.4f };
+float anguloBase[] = { 0, 0, 0 };
+unsigned int vaoBase;
+float limitesPosicion[] = { -1.8, 1.8, 0, 0, -1.8, 1.8 };
+float velocidade[] = { 0, 0, 0 };
+ObxectoMobil base(posBase, escBase, anguloBase, 0, 0.00005f, limitesPosicion, velocidade);
 
-obxecto base = { 0, 0.1f, 0, 0, 0, 0, 0.3f, 0.2f, 0.4f, 0 };
-obxecto art1 = { 0, 0.05f, 0.0f, M_PI / 6.0f, 0, 0, 0.1f, 0.1f, 0.1f, 0 };
-obxecto brazo1 = { 0, 0.35f, 0.0f, 0, 0, 0, 0.06f, 0.7f, 0.06f, 0 };
-obxecto art2 = { 0, 0.35f, 0.0f, M_PI / 4.0f, 0, 0, 0.06f, 0.06f, 0.06f, 0 };
-obxecto brazo2 = { 0, 0.2f, 0.0f, 0, 0, 0, 0.04f, 0.4f, 0.04f, 0 };
+float posArt1[] = { 0, 0.05f, 0 };
+float anguloArt1[] = { M_PI / 6.0f, 0, 0 };
+float escArt1[] = { 0.1f, 0.1f, 0.1f };
+unsigned int vaoArt1;
+ObxectoMobil art1(posArt1, escArt1, anguloArt1);
+
+float posBrazo1[] = { 0, 0.35f, 0 };
+float escBrazo1[] = { 0.06f, 0.7f, 0.06f };
+Obxecto brazo1(posBrazo1, escBrazo1);
+
+float posArt2[] = { 0, 0.35f, 0 };
+float escArt2[] = { 0.06f, 0.06f, 0.06f };
+float anguloArt2[] = { M_PI / 4.0f, 0, 0 };
+ObxectoMobil art2(posArt2, escArt2, anguloArt2);
+
+float posBrazo2[] = { 0, 0.2f, 0 };
+float escBrazo2[] = { 0.04f, 0.4f, 0.04f };
+Obxecto brazo2(posBrazo2, escBrazo2);
+
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
@@ -204,7 +211,6 @@ void debuxaEixos() {
 	glDeleteBuffers(1, &EBO);
 
 }
-
 void debuxaCadrado() {
 	unsigned int VBO;
 
@@ -241,170 +247,28 @@ void debuxaCadrado() {
 
 }
 
-void debuxaCubo() {
-	unsigned int VBO, EBO;
-
-
-	float vertices[] = {
-		-0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f, 0.0f,1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,1.0f,
-
-		-0.5f, -0.5f,  -0.5f, 1.0f, 0.0f,0.0f,
-		 0.5f, -0.5f,  -0.5f, 1.0f, 0.0f,0.0f,
-		 0.5f,  0.5f,  -0.5f, 0.0f, 0.0f,1.0f,
-		-0.5f,  0.5f,  -0.5f, 0.0f, 1.0f,1.0f
-	};
-
-	unsigned int indices[] = {
-		// Cara frontal
-		0, 1, 2,
-		0, 2, 3,
-
-		// Cara de atrás
-		4, 7, 6,
-		4, 6, 5,
-
-		// Cara superior
-		2, 6, 3,
-		3, 6, 7,
-
-		// Cara inferior
-		0, 4, 1,
-		1, 4, 5,
-
-		// Cara dereita
-		1, 5, 2,
-		5, 6, 2,
-
-		// Cara esquerda
-		0, 3, 4,
-		4, 3, 7
-
-	};
-
-	glGenVertexArrays(1, &VAOCubo);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-
-	glBindVertexArray(VAOCubo);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	// position vertices
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	// posicion cor
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	glBindVertexArray(0);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
-}
-
-void debuxaEsfera() {
-	unsigned int VBO;
-
-	extern float vertices_esfera[8640];
-
-	glGenVertexArrays(1, &VAOEsfera);
-	glGenBuffers(1, &VBO);
-	// bind the Vertex Array Object first.
-	glBindVertexArray(VAOEsfera);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_esfera), vertices_esfera, GL_STATIC_DRAW);
-
-	// Vertices
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	// Normais
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	// Texturas
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	glDeleteBuffers(1, &VBO);
-
-}
-
-
-void actualizarPosicion(float* x, float* z, float angulo) {
-	float tempvx, tempvz;
-
-	// No caso no que se esta pisando o acelerador
-	if (acceleration > 0) {
-		// Calcular a velocidade da grua en función da aceleración 
-		// e do tempo que se leva pisando o acelerador
-		tempvx = vxInicial + sin(angulo) * acceleration * deltaTime;
-		tempvz = vzInicial + cos(angulo) * acceleration * deltaTime;
-	}
-	else { 
-		// No caso no que deixamos de acelerar a 
-		// velocidade permanece constante se obviamos 
-		// a forza de rozamento
-		tempvx = vx;
-		tempvz = vz;
-	}
-
-	// Limitamos o valor da velocidade para que non 
-	// cambie de signo por culpa da forza de rozamento
-	if (tempvx >= 0) {
-		vx = fmax(tempvx - rozamento, 0);
-	}
-	else {
-		vx = fmin(tempvx + rozamento, 0);
-	}
-	if (tempvz >= 0) {
-		vz = fmax(tempvz - rozamento, 0);
-	}
-	else {
-		vz = fmin(tempvz + rozamento, 0);
-	}
-
-	// Actualizamos a posicion da grua tendo en conta a velocidade
-	*x = fmin(*x + vx, 1.8);
-	*x = fmax(*x + vx, -1.8);
-	*z = fmin(*z + vz, 1.8);
-	*z = fmax(*z + vz, -1.8);
-}
-
+// Funcions para debuxar as distintas partes da grua
 void renderizarBase(int transformLoc, glm::mat4* transform, glm::mat4* transformTemp) {
 	*transform = glm::mat4();
-	*transform = glm::translate(*transform, glm::vec3(base.px, base.py, base.pz));
-	*transform = glm::rotate(*transform, (float)base.angulo_y, glm::vec3(0.0, 1.0, 0.0));
+	*transform = glm::translate(*transform, glm::vec3(base.posicion[0], base.posicion[1], base.posicion[2]));
+	*transform = glm::rotate(*transform, base.angulo[1], glm::vec3(0.0, 1.0, 0.0));
 
 	// Para mover o resto da grua coa base gardamos esta matriz para aplicarlla ao resto das componhentes
 	*transformTemp = *transform;
-	*transform = glm::scale(*transform, glm::vec3(base.sx, base.sy, base.sz));
+	*transform = glm::scale(*transform, glm::vec3(base.escalado[0], base.escalado[1], base.escalado[2]));
 	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(*transform));
 	glBindVertexArray(VAOCubo);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 }
 
 void renderizarArt1(int transformLoc, glm::mat4* transform, glm::mat4* transformTemp) {
-	*transform = glm::mat4();
-	*transform = glm::translate(*transform, glm::vec3(art1.px, art1.py, art1.pz));
-	*transform = glm::rotate(*transform, (float)art1.angulo_x, glm::vec3(1.0, 0.0, 0.0));
-	*transform = *transformTemp * (*transform);
+	*transform = *transformTemp;
+	*transform = glm::translate(*transform, glm::vec3(art1.posicion[0], art1.posicion[1], art1.posicion[2]));
+	*transform = glm::rotate(*transform, (float)art1.angulo[0], glm::vec3(1.0, 0.0, 0.0));
 
 	*transformTemp = *transform;
 
-	*transform = glm::scale(*transform, glm::vec3(art1.sx, art1.sy, art1.sz));
+	*transform = glm::scale(*transform, glm::vec3(art1.escalado[0], art1.escalado[1], art1.escalado[2]));
 	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(*transform));
 	glBindVertexArray(VAOEsfera);
 	glDrawArrays(GL_TRIANGLES, 0, 1080);
@@ -412,26 +276,25 @@ void renderizarArt1(int transformLoc, glm::mat4* transform, glm::mat4* transform
 
 void renderizarBrazo1(int transformLoc, glm::mat4* transform, glm::mat4* transformTemp) {
 	*transform = *transformTemp;
-	*transform = glm::translate(*transform, glm::vec3(brazo1.px, brazo1.py, brazo1.pz));
+	*transform = glm::translate(*transform, glm::vec3(brazo1.posicion[0], brazo1.posicion[1], brazo1.posicion[2]));
 
 	*transformTemp = *transform;
 
-	*transform = glm::scale(*transform, glm::vec3(brazo1.sx, brazo1.sy, brazo1.sz));
+	*transform = glm::scale(*transform, glm::vec3(brazo1.escalado[0], brazo1.escalado[1], brazo1.escalado[2]));
 	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(*transform));
 	glBindVertexArray(VAOCubo);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 }
 
 void renderizarArt2(int transformLoc, glm::mat4* transform, glm::mat4* transformTemp) {
-	*transform = glm::mat4();
-	*transform = glm::translate(*transform, glm::vec3(art2.px, art2.py, art2.pz));
-	*transform = glm::rotate(*transform, (float)art2.angulo_x, glm::vec3(1.0, 0.0, 0.0));
-	*transform = *transformTemp * (*transform);
+	*transform = *transformTemp;
+	*transform = glm::translate(*transform, glm::vec3(art2.posicion[0], art2.posicion[1], art2.posicion[2]));
+	*transform = glm::rotate(*transform, (float)art2.angulo[0], glm::vec3(1.0, 0.0, 0.0));
 
 
 	*transformTemp = *transform;
 
-	*transform = glm::scale(*transform, glm::vec3(art2.sx, art2.sy, art2.sz));
+	*transform = glm::scale(*transform, glm::vec3(art2.escalado[0], art2.escalado[1], art2.escalado[2]));
 	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(*transform));
 	glBindVertexArray(VAOEsfera);
 	glDrawArrays(GL_TRIANGLES, 0, 1080);
@@ -439,17 +302,15 @@ void renderizarArt2(int transformLoc, glm::mat4* transform, glm::mat4* transform
 
 void renderizarBrazo2(int transformLoc, glm::mat4* transform, glm::mat4* transformTemp) {
 	*transform = *transformTemp;
-	*transform = glm::translate(*transform, glm::vec3(brazo2.px, brazo2.py, brazo2.pz));
+	*transform = glm::translate(*transform, glm::vec3(brazo2.posicion[0], brazo2.posicion[1], brazo2.posicion[2]));
 
 	*transformTemp = *transform;
 
-	*transform = glm::scale(*transform, glm::vec3(brazo2.sx, brazo2.sy, brazo2.sz));
+	*transform = glm::scale(*transform, glm::vec3(brazo2.escalado[0], brazo2.escalado[1], brazo2.escalado[2]));
 	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(*transform));
 	glBindVertexArray(VAOCubo);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 }
-
-
 
 void openGlInit() {
 	glClearDepth(1.0f); // Valor z-buffer
@@ -493,9 +354,9 @@ int main()
 	shaderProgram = setShaders("shader.vert", "shader.frag");
 
 	debuxaCadrado();
-	debuxaCubo();
+	base.debuxaCubo(&VAOCubo);
 	debuxaEixos();
-	debuxaEsfera();
+	art1.debuxaEsfera(&VAOEsfera);
 
 	// Obtén la ubicación de las matrices de vista y proyección en el programa de shader
 	GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
@@ -518,13 +379,13 @@ int main()
 
 		// Coloco a camara
 		if (xeral) {
-			vistaXeral(base.px, base.py, base.pz);
+			vistaXeral(base.posicion[0], base.posicion[1], base.posicion[2]);
 		}
 		else if (terceira) {
-			vistaTerceiraPersoa(base.px, base.py, base.pz, base.angulo_y);
+			vistaTerceiraPersoa(base.posicion[0], base.posicion[1], base.posicion[2], base.angulo[1]);
 		}
 		else {
-			vistaPrimeiraPersoa(base.px, base.py, base.pz, base.angulo_y);
+			vistaPrimeiraPersoa(base.posicion[0], base.posicion[1], base.posicion[2], base.angulo[1]);
 		}
 
 		glUseProgram(shaderProgram);
@@ -558,7 +419,7 @@ int main()
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-		actualizarPosicion(&base.px, &base.pz, base.angulo_y);
+		base.actualizarPosicion(vxInicial, vzInicial, deltaTime);
 
 		renderizarBase(transformLoc, &transform, &transformTemp);
 		renderizarArt1(transformLoc, &transform, &transformTemp);
@@ -602,12 +463,12 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 	// Tecla d: xiro da grua a dereita
 	if (key == 68) {
-		base.angulo_y -= UNIDADE_GRAO_EN_RADIANS;
+		base.angulo[1] -= UNIDADE_GRAO_EN_RADIANS;
 	}
 
 	// Tecla a: xiro da grua a esquerda
 	if (key == 65) {
-		base.angulo_y += UNIDADE_GRAO_EN_RADIANS;
+		base.angulo[1] += UNIDADE_GRAO_EN_RADIANS;
 	}
 
 	// Tecla w: acelerador
@@ -616,13 +477,13 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		if (previousTime == 0) {
 			previousTime = glfwGetTime();
 			// Comezamos a acelerar (constante)
-			acceleration = ACELERACION;
+			base.aceleracion = ACELERACION;
 			// No caso de que a grua ainda estivera en movemento
 			// tinha unha velocidade que hai que considerar 
 			// e sumarlla a velocidade que se vai ganhar ao 
 			// acelerar de novo
-			vxInicial = vx;
-			vzInicial = vz;
+			vxInicial = base.velocidade[0];
+			vzInicial = base.velocidade[2];
 		}
 
 		// Calcular el tiempo delta desde la última actualización
@@ -632,7 +493,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		if (action == GLFW_RELEASE) {
 			previousTime = 0;
 			// Deixamos de acelerar
-			acceleration = 0;
+			base.aceleracion = 0;
 		}
 
 	}
@@ -640,33 +501,33 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	// Tecla x: freno
 	if (key == 88) {
 		// Aumentamos o rozamento gradualmente
-		rozamento += 0.00005f;
+		base.rozamento += 0.00005f;
 
 		// Producese cando se deixa de frear
 		if (action == GLFW_RELEASE) {
 			// Reestablecemos o valor do rozamento
-			rozamento = 0.00005f;
+			base.rozamento = 0.00005f;
 		}
 	}
 
 	// Tecla r: subimos o primeiro brazo da grua
 	if (key == 82) {
-		art1.angulo_x = fmax(art1.angulo_x - UNIDADE_GRAO_EN_RADIANS, -M_PI / 5.0f);
+		art1.angulo[0] = fmax(art1.angulo[0] - UNIDADE_GRAO_EN_RADIANS, -M_PI / 5.0f);
 	}
 
 	// Tecla f: baixamos o primeiro brazo da grua
 	if (key == 70) {
-		art1.angulo_x = fmin(art1.angulo_x + UNIDADE_GRAO_EN_RADIANS, M_PI / 5.0f);
+		art1.angulo[0] = fmin(art1.angulo[0] + UNIDADE_GRAO_EN_RADIANS, M_PI / 5.0f);
 	}
 
 	// Tecla t: subimos o segundo brazo da grua
 	if (key == 84) {
-		art2.angulo_x = fmax(art2.angulo_x - 2.0f * UNIDADE_GRAO_EN_RADIANS, -(2.0f * M_PI) / 3.0f);
+		art2.angulo[0] = fmax(art2.angulo[0] - 2.0f * UNIDADE_GRAO_EN_RADIANS, -(2.0f * M_PI) / 3.0f);
 	}
 
 	// Tecla g: baixamos o segundo brazo da grua
 	if (key == 71) {
-		art2.angulo_x = fmin(art2.angulo_x + 2.0f * UNIDADE_GRAO_EN_RADIANS, (2.0f * M_PI) / 3.0f);
+		art2.angulo[0] = fmin(art2.angulo[0] + 2.0f * UNIDADE_GRAO_EN_RADIANS, (2.0f * M_PI) / 3.0f);
 	}
 
 	// Tecla dereita: xiro da camara en vistaXeral a dereita
