@@ -10,6 +10,7 @@
 
 #include "Obxecto.h"
 #include "ObxectoMobil.h"
+#include "Camara.h"
 
 #include "lecturaShader_0_9.h"
 
@@ -19,11 +20,10 @@
 
 #define UNIDADE_GRAO_EN_RADIANS 0.0174533f
 
-void processInput(GLFWwindow* window);
+const unsigned int Camara::SCR_WIDTH = 800;
+const unsigned int Camara::SCR_HEIGHT = 800;
 
-// settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 800;
+void processInput(GLFWwindow* window);
 
 extern GLuint setShaders(const char* nVertx, const char* nFrag);
 GLuint shaderProgram;
@@ -35,19 +35,14 @@ bool primeira = false;
 bool terceira = false;
 bool xeral = true;
 
-// Para achegar, alonxar e xirar a cámara en vista xeral
-float radio = 3.0f;
-float alpha = M_PI / 2.0f;
-float beta = M_PI / 4.0f;
-
 // velocidades iniciais da grua
 float vxInicial = 0;
 float vzInicial = 0;
 
 // deltaTime. Intervalo de tempo desde a última aceleracion
-float deltaTime = 0.0f;    
+float deltaTime = 0.0f;
 // previousTime. Momento no que se empezou a acelerar
-float previousTime = 0;	
+float previousTime = 0;
 
 float posBase[] = { 0, 0.1f, 0 };
 float escBase[] = { 0.3f, 0.2f, 0.4f };
@@ -76,91 +71,9 @@ float posBrazo2[] = { 0, 0.2f, 0 };
 float escBrazo2[] = { 0.04f, 0.4f, 0.04f };
 Obxecto brazo2(posBrazo2, escBrazo2);
 
+Camara camara(3.0f, M_PI / 2.0f, M_PI / 4.0f);
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-
-void vistaPrimeiraPersoa(float x, float y, float z, float angulo)
-{
-	float d2 = 1.0f, alturaOllos = 0.2, posicionSilla = 0.2;
-	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-
-	// Matriz de vista
-	glm::mat4 view;
-	view = glm::mat4();
-	view = glm::lookAt(
-		glm::vec3(x + posicionSilla * sin(angulo), y + 0.15, z + posicionSilla * cos(angulo)),
-		glm::vec3(x + d2 * sin(angulo), y + 0.15, z + d2 * cos(angulo)),
-		glm::vec3(0.0f, 1.0f, 0.0f)
-	);
-	unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view");
-	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-
-	// Matriz de proxeccion
-	glm::mat4 projection;
-	projection = glm::mat4();
-	projection = glm::perspective(
-		glm::radians(60.0f),
-		(float)SCR_WIDTH / (float)SCR_HEIGHT,
-		0.1f, 10.0f
-	);
-	unsigned int projectionLoc = glGetUniformLocation(shaderProgram, "projection");
-	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-}
-
-void vistaXeral(float x, float y, float z)
-{
-	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-
-	// Matriz de vista
-	glm::mat4 view;
-	view = glm::mat4();
-	view = glm::lookAt(
-		glm::vec3(radio * sin(alpha) * cos(beta), radio * sin(beta), radio * cos(alpha) * cos(beta)),
-		glm::vec3(x, y, z),
-		glm::vec3(0.0f, 1.0f, 0.0f)
-	);
-	unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view");
-	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-
-	// Matriz de proxeccion
-	glm::mat4 projection;
-	projection = glm::mat4();
-	projection = glm::perspective(
-		glm::radians(60.0f),
-		(float)SCR_WIDTH / (float)SCR_HEIGHT,
-		0.1f, 10.0f
-	);
-	unsigned int projectionLoc = glGetUniformLocation(shaderProgram, "projection");
-	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-}
-
-void vistaTerceiraPersoa(float x, float y, float z, float angulo)
-{
-	float d1 = 0.6f, d2 = 3.0f;
-	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-
-	// Matriz de vista
-	glm::mat4 view;
-	view = glm::mat4();
-	view = glm::lookAt(
-		glm::vec3(x - d1 * sin(angulo), y + 0.4, z - d1 * cos(angulo)),
-		glm::vec3(x + d2 * sin(angulo), y, z + d2 * cos(angulo)),
-		glm::vec3(0.0f, 1.0f, 0.0f)
-	);
-	unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view");
-	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-
-	// Matriz de proxeccion
-	glm::mat4 projection;
-	projection = glm::mat4();
-	projection = glm::perspective(
-		glm::radians(60.0f),
-		(float)SCR_WIDTH / (float)SCR_HEIGHT,
-		0.1f, 10.0f
-	);
-	unsigned int projectionLoc = glGetUniformLocation(shaderProgram, "projection");
-	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-}
 
 void debuxaEixos() {
 	unsigned int VBO, EBO;
@@ -331,7 +244,7 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Creo a venta
-	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Grua", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(Camara::SCR_WIDTH, Camara::SCR_HEIGHT, "Grua", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -352,6 +265,9 @@ int main()
 
 	// xeramos o Shaders
 	shaderProgram = setShaders("shader.vert", "shader.frag");
+
+	// Creamos a camara
+	camara.shaderProgram = shaderProgram;
 
 	debuxaCadrado();
 	base.debuxaCubo(&VAOCubo);
@@ -379,13 +295,13 @@ int main()
 
 		// Coloco a camara
 		if (xeral) {
-			vistaXeral(base.posicion[0], base.posicion[1], base.posicion[2]);
+			camara.vistaXeral(base.posicion[0], base.posicion[1], base.posicion[2]);
 		}
 		else if (terceira) {
-			vistaTerceiraPersoa(base.posicion[0], base.posicion[1], base.posicion[2], base.angulo[1]);
+			camara.vistaTerceiraPersoa(base.posicion[0], base.posicion[1], base.posicion[2], base.angulo[1]);
 		}
 		else {
-			vistaPrimeiraPersoa(base.posicion[0], base.posicion[1], base.posicion[2], base.angulo[1]);
+			camara.vistaPrimeiraPersoa(base.posicion[0], base.posicion[1], base.posicion[2], base.angulo[1]);
 		}
 
 		glUseProgram(shaderProgram);
@@ -462,19 +378,19 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	std::cout << key << std::endl;
 
 	// Tecla d: xiro da grua a dereita
-	if (key == 68) {
+	if (key == 68 && action != GLFW_RELEASE) {
 		base.angulo[1] -= UNIDADE_GRAO_EN_RADIANS;
 	}
 
 	// Tecla a: xiro da grua a esquerda
-	if (key == 65) {
+	if (key == 65 && action != GLFW_RELEASE) {
 		base.angulo[1] += UNIDADE_GRAO_EN_RADIANS;
 	}
 
 	// Tecla w: acelerador
 	if (key == 87) {
 
-		if (previousTime == 0) {
+		if (action == GLFW_PRESS) {
 			previousTime = glfwGetTime();
 			// Comezamos a acelerar (constante)
 			base.aceleracion = ACELERACION;
@@ -486,20 +402,20 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 			vzInicial = base.velocidade[2];
 		}
 
-		// Calcular el tiempo delta desde la última actualización
-		deltaTime = glfwGetTime() - previousTime;
-
 		// Producese cando se deixa de acelerar
 		if (action == GLFW_RELEASE) {
-			previousTime = 0;
 			// Deixamos de acelerar
 			base.aceleracion = 0;
+		}
+		else {
+			// Calcular o tiempo dende desde a ultima actualización
+			deltaTime = glfwGetTime() - previousTime;
 		}
 
 	}
 
 	// Tecla x: freno
-	if (key == 88) {
+	if (key == 88 && action != GLFW_RELEASE) {
 		// Aumentamos o rozamento gradualmente
 		base.rozamento += 0.00005f;
 
@@ -511,80 +427,80 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	}
 
 	// Tecla r: subimos o primeiro brazo da grua
-	if (key == 82) {
+	if (key == 82 && action != GLFW_RELEASE) {
 		art1.angulo[0] = fmax(art1.angulo[0] - UNIDADE_GRAO_EN_RADIANS, -M_PI / 5.0f);
 	}
 
 	// Tecla f: baixamos o primeiro brazo da grua
-	if (key == 70) {
+	if (key == 70 && action != GLFW_RELEASE) {
 		art1.angulo[0] = fmin(art1.angulo[0] + UNIDADE_GRAO_EN_RADIANS, M_PI / 5.0f);
 	}
 
 	// Tecla t: subimos o segundo brazo da grua
-	if (key == 84) {
+	if (key == 84 && action != GLFW_RELEASE) {
 		art2.angulo[0] = fmax(art2.angulo[0] - 2.0f * UNIDADE_GRAO_EN_RADIANS, -(2.0f * M_PI) / 3.0f);
 	}
 
 	// Tecla g: baixamos o segundo brazo da grua
-	if (key == 71) {
+	if (key == 71 && action != GLFW_RELEASE) {
 		art2.angulo[0] = fmin(art2.angulo[0] + 2.0f * UNIDADE_GRAO_EN_RADIANS, (2.0f * M_PI) / 3.0f);
 	}
 
 	// Tecla dereita: xiro da camara en vistaXeral a dereita
-	if (key == 262) {
-		alpha += UNIDADE_GRAO_EN_RADIANS;
-		if (alpha >= 2.0f * M_PI) {
-			alpha -= 2.0f * M_PI;
+	if (key == 262 && action != GLFW_RELEASE) {
+		camara.alpha += UNIDADE_GRAO_EN_RADIANS;
+		if (camara.alpha >= 2.0f * M_PI) {
+			camara.alpha -= 2.0f * M_PI;
 		}
 	}
 
 	// So se esta activada a vista xeral podemos manexar a camara
 	if (xeral) {
 		// Tecla esquerda: xiro da camara en vistaXeral a esquerda
-		if (key == 263) {
-			alpha -= UNIDADE_GRAO_EN_RADIANS;
-			if (alpha <= -2.0f * M_PI) {
-				alpha += 2.0f * M_PI;
+		if (key == 263 && action != GLFW_RELEASE) {
+			camara.alpha -= UNIDADE_GRAO_EN_RADIANS;
+			if (camara.alpha <= -2.0f * M_PI) {
+				camara.alpha += 2.0f * M_PI;
 			}
 		}
 
 		// Tecla arriba: xiro da camara en vistaXeral na vertical cara arriba
-		if (key == 265) {
+		if (key == 265 && action != GLFW_RELEASE) {
 			// Limite superior de 90 grados
-			beta = fmin(beta + UNIDADE_GRAO_EN_RADIANS, M_PI / 2.0f - UNIDADE_GRAO_EN_RADIANS);
+			camara.beta = fmin(camara.beta + UNIDADE_GRAO_EN_RADIANS, M_PI / 2.0f - UNIDADE_GRAO_EN_RADIANS);
 		}
 
 		// Tecla abaixo: xiro da camara en vistaXeral na vertical cara abaixo
-		if (key == 264) {
+		if (key == 264 && action != GLFW_RELEASE) {
 			// Limite superior de 90 grados
-			beta = fmax(beta - UNIDADE_GRAO_EN_RADIANS, 0.0f + UNIDADE_GRAO_EN_RADIANS);
+			camara.beta = fmax(camara.beta - UNIDADE_GRAO_EN_RADIANS, 0.0f + UNIDADE_GRAO_EN_RADIANS);
 		}
 
 		// Tecla +: achegase a camara en vistaXeral
-		if (key == 93) {
-			radio = fmax(radio - 0.1f, 1.0f);
+		if (key == 93 && action != GLFW_RELEASE) {
+			camara.radio = fmax(camara.radio - 0.1f, 1.0f);
 		}
 
 		// Tecla -: afastase a camara en vistaXeral
-		if (key == 47) {
-			radio = fmin(radio + 0.1f, 8.0f);
+		if (key == 47 && action != GLFW_RELEASE) {
+			camara.radio = fmin(camara.radio + 0.1f, 8.0f);
 		}
 	}
 
 	// Tecla 1: ponse a vista en primeira persoa
-	if (key == 49) {
+	if (key == 49 && action == GLFW_PRESS) {
 		xeral = false;
 		terceira = false;
 		primeira = true;
 	}
 	// Tecla 2: ponse a vista en vista xeral
-	else if (key == 50) {
+	else if (key == 50 && action == GLFW_PRESS) {
 		xeral = true;
 		terceira = false;
 		primeira = false;
 	}
 	// Tecla 3: ponse a vista en terceira persoa
-	else if (key == 51) {
+	else if (key == 51 && action == GLFW_PRESS) {
 		xeral = false;
 		terceira = true;
 		primeira = false;
