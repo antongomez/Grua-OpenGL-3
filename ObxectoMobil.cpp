@@ -49,10 +49,11 @@ void ObxectoMobil::inicializarCero() {
 	}
 }
 
+// Primeiro rotamos en torno ao eixo x e logo en torno ao eixo y
 void ObxectoMobil::rotarObxecto(glm::mat4* transform, glm::mat4* transformTemp) {
-	*transform = glm::rotate(*transform, this->angulo[0], glm::vec3(1.0, 0.0, 0.0));
 	*transform = glm::rotate(*transform, this->angulo[1], glm::vec3(0.0, 1.0, 0.0));
-	*transform = glm::rotate(*transform, this->angulo[2], glm::vec3(0.0, 0.0, 1.0));
+	*transform = glm::rotate(*transform, this->angulo[0], glm::vec3(1.0, 0.0, 0.0));
+	//*transform = glm::rotate(*transform, this->angulo[2], glm::vec3(0.0, 0.0, 1.0));
 }
 
 float ObxectoMobil::moduloVelocidade() {

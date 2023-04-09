@@ -23,11 +23,7 @@
 const unsigned int Camara::SCR_WIDTH = 800;
 const unsigned int Camara::SCR_HEIGHT = 800;
 
-void processInput(GLFWwindow* window);
-
-extern GLuint setShaders(const char* nVertx, const char* nFrag);
-GLuint shaderProgram;
-
+// Variables para os VAOs
 unsigned int VAO, VAOCubo, VAOCadrado, VAOEsfera;
 
 // Variables para controlar a camara
@@ -44,6 +40,7 @@ float deltaTime = 0.0f;
 // previousTime. Momento no que se empezou a acelerar
 float previousTime = 0;
 
+// Creamos os obxectos que representan as distintas partes da grua
 float posBase[] = { 0, 0.1f, 0 };
 float escBase[] = { 0.3f, 0.2f, 0.4f };
 float anguloBase[] = { 0, 0, 0 };
@@ -73,6 +70,10 @@ Obxecto brazo2(posBrazo2, escBrazo2, 0);
 
 Camara camara(3.0f, M_PI / 2.0f, M_PI / 4.0f);
 
+extern GLuint setShaders(const char* nVertx, const char* nFrag);
+GLuint shaderProgram;
+
+void processInput(GLFWwindow* window);
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 void openGlInit() {
@@ -81,6 +82,24 @@ void openGlInit() {
 	glEnable(GL_DEPTH_TEST); // z-buffer
 	glEnable(GL_CULL_FACE); // ocultacion caras back
 	glCullFace(GL_BACK);
+}
+
+void renderizarChan(unsigned int transformLoc, glm::mat4* transform) {
+	// CHAN
+	float i, j;
+	float escala = 10.0;
+
+	for (i = -2; i <= 2; i += (float)(1.0 / escala)) {
+		for (j = -2; j <= 2; j += (float)(1.0 / escala)) {
+			*transform = glm::mat4();
+			*transform = glm::rotate(*transform, (float)(-M_PI / 2.0), glm::vec3(1.0, 0.0, 0.0));
+			*transform = glm::translate(*transform, glm::vec3(i, j, 0));
+			*transform = glm::scale(*transform, glm::vec3(1.0 / escala, 1.0 / escala, 1.0 / escala));
+			glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(*transform));
+			glBindVertexArray(VAOCadrado);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+		}
+	}
 }
 
 
@@ -113,7 +132,7 @@ int main()
 
 	openGlInit();
 
-	// xeramos o Shaders
+	// Xeramos o Shaders
 	shaderProgram = setShaders("shader.vert", "shader.frag");
 
 	// Creamos a camara
@@ -124,7 +143,7 @@ int main()
 	Obxecto::debuxaEixos(&VAO);
 	Obxecto::debuxaEsfera(&VAOEsfera);
 
-	// Obtén la ubicación de las matrices de vista y proyección en el programa de shader
+	// Obten a ubicación das matrices de vista e proxeccion no programa de shader
 	GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
 	GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
 
@@ -143,7 +162,7 @@ int main()
 		// ------
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Coloco a camara
+		// Colocamos a camara
 		if (xeral) {
 			camara.vistaXeral(base.posicion[0], base.posicion[1], base.posicion[2]);
 		}
@@ -162,24 +181,10 @@ int main()
 		glm::mat4 transform = glm::mat4();
 		// Matriz de model para mover toda a grua ao mesmo tempo
 		glm::mat4 transformTemp = glm::mat4();
-		// Buscamos a matriz no Shader
+		// Buscamos a matriz de model no Shader
 		unsigned int transformLoc = glGetUniformLocation(shaderProgram, "transform");
 
-		// CHAN
-		float i, j;
-		float escala = 10.0;
-
-		for (i = -2; i <= 2; i += (float)(1.0 / escala)) {
-			for (j = -2; j <= 2; j += (float)(1.0 / escala)) {
-				transform = glm::mat4();
-				transform = glm::rotate(transform, (float)(-M_PI / 2.0), glm::vec3(1.0, 0.0, 0.0));
-				transform = glm::translate(transform, glm::vec3(i, j, 0));
-				transform = glm::scale(transform, glm::vec3(1.0 / escala, 1.0 / escala, 1.0 / escala));
-				glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
-				glBindVertexArray(VAOCadrado);
-				glDrawArrays(GL_TRIANGLES, 0, 6);
-			}
-		}
+		renderizarChan(transformLoc, &transform);
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -265,7 +270,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	// Tecla x: freno
 	if (key == 88 && action != GLFW_RELEASE) {
 		// Aumentamos o rozamento gradualmente
-		base.rozamento += ACELERACION/5.0f;
+		base.rozamento += ACELERACION / 5.0f;
 
 		// Producese cando se deixa de frear
 		if (action == GLFW_RELEASE) {
@@ -274,24 +279,44 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		}
 	}
 
-	// Tecla r: subimos o primeiro brazo da grua
-	if (key == 82 && action != GLFW_RELEASE) {
+	// Tecla t: subimos o primeiro brazo da grua
+	if (key == 84 && action != GLFW_RELEASE) {
 		art1.angulo[0] = fmax(art1.angulo[0] - UNIDADE_GRAO_EN_RADIANS, -M_PI / 5.0f);
 	}
 
-	// Tecla f: baixamos o primeiro brazo da grua
-	if (key == 70 && action != GLFW_RELEASE) {
+	// Tecla g: baixamos o primeiro brazo da grua
+	if (key == 71 && action != GLFW_RELEASE) {
 		art1.angulo[0] = fmin(art1.angulo[0] + UNIDADE_GRAO_EN_RADIANS, M_PI / 5.0f);
 	}
 
-	// Tecla t: subimos o segundo brazo da grua
-	if (key == 84 && action != GLFW_RELEASE) {
+	// Tecla f: xiramos a esquerda o primeiro brazo da grua
+	if (key == 70 && action != GLFW_RELEASE) {
+		art1.angulo[1] += 2.0f * UNIDADE_GRAO_EN_RADIANS;
+	}
+
+	// Tecla h: xiramos a dereita o primeiro brazo da grua
+	if (key == 72 && action != GLFW_RELEASE) {
+		art1.angulo[1] -= 2.0f * UNIDADE_GRAO_EN_RADIANS;
+	}
+
+	// Tecla i: subimos o segundo brazo da grua
+	if (key == 73 && action != GLFW_RELEASE) {
 		art2.angulo[0] = fmax(art2.angulo[0] - 2.0f * UNIDADE_GRAO_EN_RADIANS, -(2.0f * M_PI) / 3.0f);
 	}
 
-	// Tecla g: baixamos o segundo brazo da grua
-	if (key == 71 && action != GLFW_RELEASE) {
+	// Tecla k: baixamos o segundo brazo da grua
+	if (key == 75 && action != GLFW_RELEASE) {
 		art2.angulo[0] = fmin(art2.angulo[0] + 2.0f * UNIDADE_GRAO_EN_RADIANS, (2.0f * M_PI) / 3.0f);
+	}
+
+	// Tecla j: xiramos a esquerda o primeiro brazo da grua
+	if (key == 74 && action != GLFW_RELEASE) {
+		art2.angulo[1] += 2.0f * UNIDADE_GRAO_EN_RADIANS;
+	}
+
+	// Tecla l: xiramos a dereita o primeiro brazo da grua
+	if (key == 76 && action != GLFW_RELEASE) {
+		art2.angulo[1] -= 2.0f * UNIDADE_GRAO_EN_RADIANS;
 	}
 
 	// Tecla dereita: xiro da camara en vistaXeral a dereita
