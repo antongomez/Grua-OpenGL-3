@@ -268,7 +268,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	}
 
 	// Tecla x: freno
-	if (key == 88 && action != GLFW_RELEASE) {
+	if (key == 88) {
 		// Aumentamos o rozamento gradualmente
 		base.rozamento += ACELERACION / 5.0f;
 
