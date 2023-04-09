@@ -63,19 +63,22 @@ void ObxectoMobil::actualizarPosicion(float vxInicial, float vzInicial, float de
 		tempvz = velocidade[2];
 	}
 
+	float rozamentox = rozamento * fabs(sin(angulo[1]));
+	float rozamentoz = rozamento * fabs(cos(angulo[1]));
+
 	// Limitamos o valor da velocidade para que non 
 	// cambie de signo por culpa da forza de rozamento
 	if (tempvx >= 0) {
-		velocidade[0] = fmax(tempvx - rozamento, 0);
+		velocidade[0] = fmax(tempvx - rozamentox, 0);
 	}
 	else {
-		velocidade[0] = fmin(tempvx + rozamento, 0);
+		velocidade[0] = fmin(tempvx + rozamentox, 0);
 	}
 	if (tempvz >= 0) {
-		velocidade[2] = fmax(tempvz - rozamento, 0);
+		velocidade[2] = fmax(tempvz - rozamentoz, 0);
 	}
 	else {
-		velocidade[2] = fmin(tempvz + rozamento, 0);
+		velocidade[2] = fmin(tempvz + rozamentoz, 0);
 	}
 
 	// Actualizamos a posicion da grua tendo en conta a velocidade
