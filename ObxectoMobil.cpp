@@ -1,21 +1,23 @@
 #include "Obxecto.h"
 #include "ObxectoMobil.h"
 
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "math.h"
 
 
-ObxectoMobil::ObxectoMobil(float* posicion, float* escalado, float* angulo) : Obxecto(posicion, escalado) {
+ObxectoMobil::ObxectoMobil(float* posicion, float* escalado, float* angulo, int tipo) : Obxecto(posicion, escalado, tipo) {
 	asignarAngulo(angulo);
 	inicializarCero();
+	this->xirar = false;
 }
 
 ObxectoMobil::ObxectoMobil(float* posicion, float* escalado, float* angulo,
-	float aceleracion, float rozamento, float* limitesPosicion,
-	float* velocidade) : Obxecto(posicion, escalado) {
+	float* limitesPosicion, float* velocidade, int tipo) : Obxecto(posicion, escalado, tipo) {
 
 	asignarAngulo(angulo);
-	this->aceleracion = aceleracion;
-	this->rozamento = rozamento;
+	this->aceleracion = 0;
+	this->rozamento = ROZAMENTO;
 
 	for (int i = 0; i < 3; i++) {
 		this->velocidade[i] = velocidade[i];
@@ -24,6 +26,8 @@ ObxectoMobil::ObxectoMobil(float* posicion, float* escalado, float* angulo,
 	for (int i = 0; i < 6; i++) {
 		this->limitesPosicion[i] = limitesPosicion[i];
 	}
+
+	this->xirar = true;
 }
 
 void ObxectoMobil::asignarAngulo(float* angulo) {
@@ -45,6 +49,16 @@ void ObxectoMobil::inicializarCero() {
 	}
 }
 
+void ObxectoMobil::rotarObxecto(glm::mat4* transform, glm::mat4* transformTemp) {
+	*transform = glm::rotate(*transform, this->angulo[0], glm::vec3(1.0, 0.0, 0.0));
+	*transform = glm::rotate(*transform, this->angulo[1], glm::vec3(0.0, 1.0, 0.0));
+	*transform = glm::rotate(*transform, this->angulo[2], glm::vec3(0.0, 0.0, 1.0));
+}
+
+float ObxectoMobil::moduloVelocidade() {
+	return sqrt(velocidade[2] * velocidade[2] + velocidade[0] * velocidade[0]);
+}
+
 void ObxectoMobil::actualizarPosicion(float vxInicial, float vzInicial, float deltaTime) {
 	float tempvx, tempvz;
 
@@ -56,11 +70,14 @@ void ObxectoMobil::actualizarPosicion(float vxInicial, float vzInicial, float de
 		tempvz = vzInicial + cos(angulo[1]) * aceleracion * deltaTime;
 	}
 	else {
-		// No caso no que deixamos de acelerar a 
-		// velocidade permanece constante se obviamos 
-		// a forza de rozamento
-		tempvx = velocidade[0];
-		tempvz = velocidade[2];
+		/* No caso no que deixamos de acelerar a
+		 velocidade permanece constante se obviamos
+		 a forza de rozamento. Hai que ter en conta que
+		 a grua pode xirar igualmente ainda que deixe de
+		 acelerar. Multiplicamos pola matriz de xiro de
+		 angulo angulo[1].*/
+		tempvz = cos(angulo[1]) * moduloVelocidade();
+		tempvx = sin(angulo[1]) * moduloVelocidade();
 	}
 
 	float rozamentox = rozamento * fabs(sin(angulo[1]));
