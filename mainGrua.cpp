@@ -75,6 +75,7 @@ GLuint shaderProgram;
 
 void processInput(GLFWwindow* window);
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 void openGlInit() {
 	glClearDepth(1.0f); // Valor z-buffer
@@ -120,6 +121,8 @@ int main()
 		glfwTerminate();
 		return -1;
 	}
+
+	// Asignacion do contexto de OpenGL a venta
 	glfwMakeContextCurrent(window);
 
 	// glad: load all OpenGL function pointers
@@ -130,12 +133,18 @@ int main()
 		return -1;
 	}
 
+	// Establecemento da funcion callback para cambiar o tamanho da venta
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+	// Funcion que rexistra as pulsacions de teclado
+	glfwSetKeyCallback(window, keyCallback);
+
 	openGlInit();
 
 	// Xeramos o Shaders
 	shaderProgram = setShaders("shader.vert", "shader.frag");
 
-	// Creamos a camara
+	// Establecemos o shader que usa a camara
 	camara.shaderProgram = shaderProgram;
 
 	Obxecto::debuxaCadrado(&VAOCadrado);
@@ -146,9 +155,6 @@ int main()
 	// Obten a ubicación das matrices de vista e proxeccion no programa de shader
 	GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
 	GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
-
-	// Funcion que rexistra as pulsacions de teclado
-	glfwSetKeyCallback(window, keyCallback);
 
 	// Lazo da venta mentres non se peche
 	// -----------
@@ -172,6 +178,8 @@ int main()
 		else {
 			camara.vistaPrimeiraPersoa(base.posicion[0], base.posicion[1], base.posicion[2], base.angulo[1]);
 		}
+
+		camara.actualizarMatrizProxeccion();
 
 		glUseProgram(shaderProgram);
 
@@ -225,6 +233,15 @@ void processInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+}
+
+// Implementación de la función de callback para cambiar el tamaño de la ventana
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	glViewport(0, 0, width, height);
+	camara.width = width;
+	camara.height = height;
+	camara.actualizarMatrizProxeccion();
 }
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {

@@ -16,10 +16,13 @@ public:
 	float radio;
 	float alpha;
 	float beta;
+	float width;
+	float height;
 
 	Camara(float radio, float alpha, float beta);
 	void vistaPrimeiraPersoa(float x, float y, float z, float angulo);
 	void vistaXeral(float x, float y, float z);
 	void vistaTerceiraPersoa(float x, float y, float z, float angulo);
+	void actualizarMatrizProxeccion();
 };
 
