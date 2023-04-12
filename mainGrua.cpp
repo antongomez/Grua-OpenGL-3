@@ -23,6 +23,7 @@
 const unsigned int Camara::SCR_WIDTH = 800;
 const unsigned int Camara::SCR_HEIGHT = 800;
 
+
 // Variables para os VAOs
 unsigned int VAO, VAOCubo, VAOCadrado, VAOEsfera;
 
@@ -70,12 +71,23 @@ Obxecto brazo2(posBrazo2, escBrazo2, 0);
 
 Camara camara(3.0f, M_PI / 2.0f, M_PI / 4.0f);
 
+
+// Flags para controles combinados
+int giro_dcha = 0;
+int giro_izda = 0;
+int camara_arriba = 0;
+int camara_abajo = 0;
+int camara_izda = 0;
+int camara_dcha = 0;
+
+
 extern GLuint setShaders(const char* nVertx, const char* nFrag);
 GLuint shaderProgram;
 
 void processInput(GLFWwindow* window);
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void teclasSimultaneas();
 
 void openGlInit() {
 	glClearDepth(1.0f); // Valor z-buffer
@@ -139,6 +151,7 @@ int main()
 	// Funcion que rexistra as pulsacions de teclado
 	glfwSetKeyCallback(window, keyCallback);
 
+
 	openGlInit();
 
 	// Xeramos o Shaders
@@ -160,6 +173,8 @@ int main()
 	// -----------
 	while (!glfwWindowShouldClose(window))
 	{
+
+
 		// input
 		// -----
 		processInput(window);
@@ -181,7 +196,7 @@ int main()
 
 		camara.actualizarMatrizProxeccion();
 
-		glUseProgram(shaderProgram);
+		glUseProgram(shaderProgram);	
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -205,14 +220,18 @@ int main()
 		brazo2.renderizarObxecto(transformLoc, &transform, &transformTemp, VAOCubo);
 
 		//EIXOS
-		transform = glm::mat4();
+		/*transform = glm::mat4();
 		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
 		glBindVertexArray(VAO);
 		glDrawElements(GL_LINES, 8, GL_UNSIGNED_INT, 0);
 
-		glBindVertexArray(0);
+		glBindVertexArray(0);*/
 
 
+		teclasSimultaneas();
+
+
+	
 		// glfw: swap 
 		// -------------------------------------------------------------------------------
 		glfwSwapBuffers(window);
@@ -244,17 +263,63 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	camara.actualizarMatrizProxeccion();
 }
 
+
+void teclasSimultaneas() {
+
+	if (giro_dcha == 1) {
+		base.angulo[1] -= UNIDADE_GRAO_EN_RADIANS;
+	}
+
+	if (giro_izda == 1) {
+		base.angulo[1] += UNIDADE_GRAO_EN_RADIANS;
+	}
+
+	if (camara_arriba == 1) {
+		camara.beta = fmin(camara.beta + UNIDADE_GRAO_EN_RADIANS, M_PI / 2.0f - UNIDADE_GRAO_EN_RADIANS);
+	}
+
+	if (camara_abajo == 1) {
+		camara.beta = fmax(camara.beta - UNIDADE_GRAO_EN_RADIANS, 0.0f + UNIDADE_GRAO_EN_RADIANS);
+	}
+
+	if (camara_izda == 1) {
+		camara.alpha -= UNIDADE_GRAO_EN_RADIANS;
+		if (camara.alpha <= -2.0f * M_PI) {
+			camara.alpha += 2.0f * M_PI;
+		}
+	}
+
+	if (camara_dcha == 1) {
+		camara.alpha += UNIDADE_GRAO_EN_RADIANS;
+		if (camara.alpha >= 2.0f * M_PI) {
+			camara.alpha -= 2.0f * M_PI;
+		}
+	}
+}
+
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	std::cout << key << std::endl;
 
 	// Tecla d: xiro da grua a dereita
-	if (key == 68 && action != GLFW_RELEASE) {
-		base.angulo[1] -= UNIDADE_GRAO_EN_RADIANS;
+	if (key == 68) {
+		if (action != GLFW_RELEASE) {
+			giro_dcha = 1;
+			/*base.angulo[1] -= UNIDADE_GRAO_EN_RADIANS;*/
+		}
+		else {
+			giro_dcha = 0;
+		}
 	}
 
 	// Tecla a: xiro da grua a esquerda
-	if (key == 65 && action != GLFW_RELEASE) {
-		base.angulo[1] += UNIDADE_GRAO_EN_RADIANS;
+	if (key == 65) {
+		if (action != GLFW_RELEASE) {
+			giro_izda = 1;
+			/*base.angulo[1] += UNIDADE_GRAO_EN_RADIANS;*/
+		}
+		else {
+			giro_izda = 0;
+		}
 	}
 
 	// Tecla w: acelerador
@@ -337,34 +402,59 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	}
 
 	// Tecla dereita: xiro da camara en vistaXeral a dereita
-	if (key == 262 && action != GLFW_RELEASE) {
-		camara.alpha += UNIDADE_GRAO_EN_RADIANS;
-		if (camara.alpha >= 2.0f * M_PI) {
-			camara.alpha -= 2.0f * M_PI;
+	if (key == 262) {
+		if (action != GLFW_RELEASE) {
+			/*camara.alpha += UNIDADE_GRAO_EN_RADIANS;
+			if (camara.alpha >= 2.0f * M_PI) {
+				camara.alpha -= 2.0f * M_PI;
+			}*/
+			camara_dcha = 1;
+		}
+		else {
+			camara_dcha = 0;
 		}
 	}
 
 	// So se esta activada a vista xeral podemos manexar a camara
 	if (xeral) {
 		// Tecla esquerda: xiro da camara en vistaXeral a esquerda
-		if (key == 263 && action != GLFW_RELEASE) {
-			camara.alpha -= UNIDADE_GRAO_EN_RADIANS;
-			if (camara.alpha <= -2.0f * M_PI) {
-				camara.alpha += 2.0f * M_PI;
+		if (key == 263) {
+			if (action != GLFW_RELEASE) {
+				/*camara.alpha -= UNIDADE_GRAO_EN_RADIANS;
+				if (camara.alpha <= -2.0f * M_PI) {
+					camara.alpha += 2.0f * M_PI;
+				}*/
+				camara_izda = 1;
+			}
+			else {
+				camara_izda = 0;
 			}
 		}
 
 		// Tecla arriba: xiro da camara en vistaXeral na vertical cara arriba
-		if (key == 265 && action != GLFW_RELEASE) {
-			// Limite superior de 90 grados
-			camara.beta = fmin(camara.beta + UNIDADE_GRAO_EN_RADIANS, M_PI / 2.0f - UNIDADE_GRAO_EN_RADIANS);
+		if (key == 265) {
+			if (action != GLFW_RELEASE) {
+				camara_arriba = 1;
+				// Limite superior de 90 grados
+				/*camara.beta = fmin(camara.beta + UNIDADE_GRAO_EN_RADIANS, M_PI / 2.0f - UNIDADE_GRAO_EN_RADIANS);*/
+			}
+			else {
+				camara_arriba = 0;
+			}
 		}
 
 		// Tecla abaixo: xiro da camara en vistaXeral na vertical cara abaixo
-		if (key == 264 && action != GLFW_RELEASE) {
-			// Limite superior de 90 grados
-			camara.beta = fmax(camara.beta - UNIDADE_GRAO_EN_RADIANS, 0.0f + UNIDADE_GRAO_EN_RADIANS);
+		if (key == 264) {
+			if (action != GLFW_RELEASE) {
+				camara_abajo = 1;
+				// Limite superior de 90 grados
+				/*camara.beta = fmax(camara.beta - UNIDADE_GRAO_EN_RADIANS, 0.0f + UNIDADE_GRAO_EN_RADIANS);*/
+			}
+			else {
+				camara_abajo = 0;
+			}
 		}
+
 
 		// Tecla +: achegase a camara en vistaXeral
 		if (key == 93 && action != GLFW_RELEASE) {

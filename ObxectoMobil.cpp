@@ -15,7 +15,7 @@ ObxectoMobil::ObxectoMobil(float* posicion, float* escalado, float* angulo, int 
 ObxectoMobil::ObxectoMobil(float* posicion, float* escalado, float* angulo,
 	float* limitesPosicion, float* velocidade, int tipo) : Obxecto(posicion, escalado, tipo) {
 
-	asignarAngulo(angulo);
+	asignarAngulo(angulo);		
 	this->aceleracion = 0;
 	this->rozamento = ROZAMENTO;
 
@@ -77,7 +77,7 @@ void ObxectoMobil::actualizarPosicion(float vxInicial, float vzInicial, float de
 		 a grua pode xirar igualmente ainda que deixe de
 		 acelerar. Multiplicamos pola matriz de xiro de
 		 angulo angulo[1].*/
-		tempvz = cos(angulo[1]) * moduloVelocidade();
+		tempvz = cos(angulo[1]) * moduloVelocidade();	
 		tempvx = sin(angulo[1]) * moduloVelocidade();
 	}
 
