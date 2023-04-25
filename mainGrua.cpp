@@ -24,6 +24,14 @@ const unsigned int Camara::SCR_WIDTH = 800;
 const unsigned int Camara::SCR_HEIGHT = 800;
 
 
+// Posicion inicial
+typedef struct {
+	float px, py, pz;
+} punto;
+
+punto pview = { 0.0f, 0.0f, 0.0f };
+punto pluz = { 0.0f, 0.0f, 0.0f };
+
 // Variables para os VAOs
 unsigned int VAO, VAOCubo, VAOCadrado, VAOEsfera;
 
@@ -115,6 +123,26 @@ void renderizarChan(unsigned int transformLoc, glm::mat4* transform) {
 	}
 }
 
+
+void iluminacion() {
+
+	// El color del objeto
+	unsigned int colorLoc = glGetUniformLocation(shaderProgram, "objectColor");
+	glUniform3f(colorLoc, 0.0f, 0.3f, 1.0f);
+
+	// El color de la luz ambiente
+	unsigned int lightLoc = glGetUniformLocation(shaderProgram, "LightColor");
+	glUniform3f(lightLoc, 0.5f, 0.5f, 0.5f);
+
+	// Luz difusa
+	unsigned int lightPosLoc = glGetUniformLocation(shaderProgram, "lightPos");
+	glUniform3f(lightPosLoc, (float)pluz.px, (float)pluz.py, (float)(pluz.pz+4));
+
+	// Luz especular
+
+	// La posicion del usuario/camara (0,0,10) en nuestro caso
+	unsigned int viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
+}
 
 int main()
 {
@@ -218,6 +246,20 @@ int main()
 		brazo1.renderizarObxecto(transformLoc, &transform, &transformTemp, VAOCubo);
 		art2.renderizarObxecto(transformLoc, &transform, &transformTemp, VAOEsfera);
 		brazo2.renderizarObxecto(transformLoc, &transform, &transformTemp, VAOCubo);
+		// LUZ
+		// Necesito acceder a los valores para colocar la luz
+		double dArray[16] = { 0.0 };
+
+		const float* pSource = (const float*)glm::value_ptr(transform);
+		for (int i = 0; i < 16; i++) {
+			dArray[i] = pSource[i];
+		}
+
+		pluz.px = (float)dArray[12];
+		pluz.py = (float)dArray[13];
+		pluz.pz = (float)dArray[14];
+
+		iluminacion();
 
 		//EIXOS
 		/*transform = glm::mat4();
