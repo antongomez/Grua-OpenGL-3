@@ -79,6 +79,9 @@ Obxecto brazo2(posBrazo2, escBrazo2, 0);
 
 Camara camara(3.0f, M_PI / 2.0f, M_PI / 4.0f);
 
+// Para pruebas
+//Camara camara(3.0f, 0.0f, 0.0f);
+
 
 // Flags para controles combinados
 int giro_dcha = 0;
@@ -87,6 +90,9 @@ int camara_arriba = 0;
 int camara_abajo = 0;
 int camara_izda = 0;
 int camara_dcha = 0;
+
+// Modo del foco
+int modo = 0;
 
 
 extern GLuint setShaders(const char* nVertx, const char* nFrag);
@@ -217,7 +223,6 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 
-
 		// input
 		// -----
 		processInput(window);
@@ -265,39 +270,26 @@ int main()
 		brazo2.renderizarObxecto(transformLoc, &transform, &transformTemp, VAOCubo);
 
 		
+		// ILUMINACION
 
-		// LUZ
-		// Necesito acceder a los valores para colocar la luz
-		double dArray[16] = { 0.0 };
-
-		/*const float* pSource = (const float*)glm::value_ptr(transformTemp);
-		for (int i = 0; i < 16; i++) {
-			dArray[i] = pSource[i];
-		}*/
-
+		// El brazo pequeno mide 0.4, que la distancia del centro al extremo es 0.2
 		glm::vec4 punta_brazo2 = glm::vec4(0.0f, 0.2f, 0.0f, 1.0f);
 
-		// Para que la luz apunte en la misma direccion que el brazo pequeno
-		//glm::vec4 dir_luz = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+		glm::vec4 dir_luz;
 
-		// Para que la luz apunte perpendicular al brazo pequeno
-		glm::vec4 dir_luz = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-
+		if (modo == 0) {
+			// Para que la luz apunte perpendicular al brazo pequeno
+			dir_luz = glm::vec4(0.0f, 0.2f, 1.0f, 1.0f);
+		}
+		else {
+			// Para que la luz apunte en la misma direccion que el brazo pequeno
+			dir_luz = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+		}
+		
 		punta_brazo2 = transformTemp * punta_brazo2;
 
 		dir_luz = (transformTemp * dir_luz) - punta_brazo2;
 
-		//pluz.px = (float)dArray[12] + dir_brazo2.x;
-		//pluz.py = (float)dArray[13] + dir_brazo2.y;
-		//pluz.pz = (float)dArray[14] + dir_brazo2.z;
-
-		//pluz.px = punta_brazo2.x;
-		//pluz.py = punta_brazo2.y;
-		//pluz.pz = punta_brazo2.z;
-
-		//dir_luz = transformTemp * 
-
-		//iluminacion(pluz.px, pluz.py, pluz.pz);
 		iluminacion(punta_brazo2, dir_luz);
 
 
@@ -370,7 +362,7 @@ void teclasSimultaneas() {
 			camara.alpha += 2.0f * M_PI;
 		}
 	}
-
+	
 	if (camara_dcha == 1) {
 		camara.alpha += UNIDADE_GRAO_EN_RADIANS;
 		if (camara.alpha >= 2.0f * M_PI) {
@@ -566,5 +558,15 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		xeral = false;
 		terceira = true;
 		primeira = false;
+	}
+
+	// Tecla M: se cambia el modo de iluminacion
+	if ((key == 77 || key == 109) && action == GLFW_PRESS) {
+		if (modo == 0) {
+			modo = 1;
+		}
+		else {
+			modo = 0;
+		}
 	}
 }
