@@ -124,7 +124,7 @@ void renderizarChan(unsigned int transformLoc, glm::mat4* transform) {
 }
 
 
-void iluminacion(float luz_x, float luz_y, float luz_z) {
+void iluminacion(glm::vec3 luz) {
 
 	// El color del objeto
 	//unsigned int colorLoc = glGetUniformLocation(shaderProgram, "objectColor");
@@ -138,7 +138,7 @@ void iluminacion(float luz_x, float luz_y, float luz_z) {
 	unsigned int lightPosLoc = glGetUniformLocation(shaderProgram, "lightPos");
 	//glUniform3f(lightPosLoc, (float)pluz.px, (float)pluz.py, (float)(pluz.pz+4));
 	//glUniform3f(lightPosLoc, 0.0f, 4.0f, 0.0f);	// Foco estatico
-	glUniform3f(lightPosLoc, luz_x, luz_y, luz_z);
+	glUniform3f(lightPosLoc, luz.x, luz.y, luz.z);
 
 	// Luz especular (depende de la camara)
 	glm::vec3 pos;
@@ -153,6 +153,9 @@ void iluminacion(float luz_x, float luz_y, float luz_z) {
 	}
 	unsigned int viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
 	glUniform3f(viewPosLoc, pos.x, pos.y, pos.z);
+
+	unsigned int luzDirLoc = glGetUniformLocation(shaderProgram, "luzDir");
+	glUniform3f(luzDirLoc, 0.0f, -1.0f, 0.0f);
 }
 
 int main()
@@ -260,21 +263,37 @@ int main()
 		art2.renderizarObxecto(transformLoc, &transform, &transformTemp, VAOEsfera);
 		brazo2.renderizarObxecto(transformLoc, &transform, &transformTemp, VAOCubo);
 
+		
 
 		// LUZ
 		// Necesito acceder a los valores para colocar la luz
 		double dArray[16] = { 0.0 };
 
-		const float* pSource = (const float*)glm::value_ptr(transform);
+		/*const float* pSource = (const float*)glm::value_ptr(transformTemp);
 		for (int i = 0; i < 16; i++) {
 			dArray[i] = pSource[i];
-		}
+		}*/
 
-		pluz.px = (float)dArray[12];
-		pluz.py = (float)dArray[13];
-		pluz.pz = (float)dArray[14];
+		glm::vec4 punta_brazo2 = glm::vec4(0.0f, 0.2f, 0.0f, 1.0f);
 
-		iluminacion(pluz.px, pluz.py, pluz.pz);
+		glm::vec4 dir_luz = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
+		punta_brazo2 = transformTemp * punta_brazo2;
+
+		dir_luz = transformTemp * dir_luz;
+
+		//pluz.px = (float)dArray[12] + dir_brazo2.x;
+		//pluz.py = (float)dArray[13] + dir_brazo2.y;
+		//pluz.pz = (float)dArray[14] + dir_brazo2.z;
+
+		//pluz.px = punta_brazo2.x;
+		//pluz.py = punta_brazo2.y;
+		//pluz.pz = punta_brazo2.z;
+
+		//dir_luz = transformTemp * 
+
+		//iluminacion(pluz.px, pluz.py, pluz.pz);
+		iluminacion(punta_brazo2);
 
 
 		//EIXOS
