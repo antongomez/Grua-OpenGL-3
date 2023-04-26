@@ -108,17 +108,18 @@ void Obxecto::debuxaCadrado(unsigned int* VAO) {
 void Obxecto::debuxaCubo(unsigned int* VAO) {
 	unsigned int VBO, EBO;
 
+	float n = 0.577350f;	// Este valor es 1/sqrt(3)
 
 	float vertices[] = {
-		-0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f, 0.0f,1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,1.0f,
+		-0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f,  -n, -n, n,
+		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,0.0f,  n, -n, n,
+		 0.5f,  0.5f,  0.5f,  0.0f, 0.0f,1.0f,  n, n, n,
+		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,1.0f,  -n, n, n,
 
-		-0.5f, -0.5f,  -0.5f, 1.0f, 0.0f,0.0f,
-		 0.5f, -0.5f,  -0.5f, 1.0f, 0.0f,0.0f,
-		 0.5f,  0.5f,  -0.5f, 0.0f, 0.0f,1.0f,
-		-0.5f,  0.5f,  -0.5f, 0.0f, 1.0f,1.0f
+		-0.5f, -0.5f,  -0.5f, 1.0f, 0.0f,0.0f,  -n, -n, -n,
+		 0.5f, -0.5f,  -0.5f, 1.0f, 0.0f,0.0f,  n, -n, -n,
+		 0.5f,  0.5f,  -0.5f, 0.0f, 0.0f,1.0f,  n, n, -n,
+		-0.5f,  0.5f,  -0.5f, 0.0f, 1.0f,1.0f,  -n, n, -n
 	};
 
 	unsigned int indices[] = {
@@ -161,12 +162,16 @@ void Obxecto::debuxaCubo(unsigned int* VAO) {
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	// position vertices
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	// posicion cor
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	// cor
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	// normais
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -193,12 +198,13 @@ void Obxecto::debuxaEsfera(unsigned int* VAO) {
 	glEnableVertexAttribArray(0);
 
 	// Normais
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(2);
 
 	// Texturas
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(2);
+	// MIENTRAS NO METAMOS TEXTURAS, EL SHADER INTERPRETA ESTO COMO COLOR
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);

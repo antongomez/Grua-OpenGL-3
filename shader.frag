@@ -14,17 +14,17 @@ uniform vec3 lightColor;
 void main()
 {
 	
-	//vec3 luzDir = vec3(0,0,-1);
+	vec3 luzDir = vec3(0,-1,0);
 
     // Ambiente
     float ambientI = 0.5;
     vec3 ambient = ambientI * lightColor;
 
     // angulo de 15 grados
-    vec3 ld = normalize(-lightPos);
+    //vec3 ld = normalize(-lightPos);
     vec3 fd = normalize(vec3((FragPos - lightPos)));
 
-    //ld = luzDir;
+    vec3 ld = luzDir;
 
     if (acos(dot(fd,ld)) < radians(15.0)) { 
   	
@@ -35,14 +35,14 @@ void main()
         vec3 diffuse = diff * lightColor;
 
         // Especular
-	    //float specularStrength = 1.0;
-	    //vec3 viewDir = normalize(viewPos - FragPos);
-	    //vec3 reflectDir = reflect(-lightDir, norm);
-	    //float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16);
-	    //vec3 specular = specularStrength * spec * lightColor;
+	    float specularStrength = 1.0;
+	    vec3 viewDir = normalize(viewPos - FragPos);
+	    vec3 reflectDir = reflect(-lightDir, norm);
+	    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16);
+	    vec3 specular = specularStrength * spec * lightColor;
 
             
-   	    vec3 result = (ambient + diffuse) * Color;
+   	    vec3 result = (ambient + diffuse + specular) * Color;
         FragColor = vec4(result, 1.0);
 
     } 

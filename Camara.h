@@ -24,5 +24,8 @@ public:
 	void vistaXeral(float x, float y, float z);
 	void vistaTerceiraPersoa(float x, float y, float z, float angulo);
 	void actualizarMatrizProxeccion();
+	glm::vec3 obtenerPosXeral();
+	glm::vec3 obtenerPos3Pers(float x, float y, float z, float angulo);
+	glm::vec3 obtenerPos1Pers(float x, float y, float z, float angulo);
 };
 

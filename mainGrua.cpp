@@ -124,7 +124,7 @@ void renderizarChan(unsigned int transformLoc, glm::mat4* transform) {
 }
 
 
-void iluminacion() {
+void iluminacion(float luz_x, float luz_y, float luz_z) {
 
 	// El color del objeto
 	//unsigned int colorLoc = glGetUniformLocation(shaderProgram, "objectColor");
@@ -137,13 +137,22 @@ void iluminacion() {
 	// Luz difusa
 	unsigned int lightPosLoc = glGetUniformLocation(shaderProgram, "lightPos");
 	//glUniform3f(lightPosLoc, (float)pluz.px, (float)pluz.py, (float)(pluz.pz+4));
-	glUniform3f(lightPosLoc, 0.0f, 4.0f, 0.0f);
+	//glUniform3f(lightPosLoc, 0.0f, 4.0f, 0.0f);	// Foco estatico
+	glUniform3f(lightPosLoc, luz_x, luz_y, luz_z);
 
-	// Luz especular
-
-	// La posicion del usuario/camara (0,0,10) en nuestro caso
+	// Luz especular (depende de la camara)
+	glm::vec3 pos;
+	if (xeral) {
+		pos = camara.obtenerPosXeral();
+	}
+	else if (terceira) {
+		pos = camara.obtenerPos3Pers(base.posicion[0], base.posicion[1], base.posicion[2], base.angulo[1]);
+	}
+	else {
+		pos = camara.obtenerPos1Pers(base.posicion[0], base.posicion[1], base.posicion[2], base.angulo[1]);
+	}
 	unsigned int viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
-	glUniform3f(viewPosLoc, 0.0f, 0.0f, 10.0f);
+	glUniform3f(viewPosLoc, pos.x, pos.y, pos.z);
 }
 
 int main()
@@ -265,7 +274,7 @@ int main()
 		pluz.py = (float)dArray[13];
 		pluz.pz = (float)dArray[14];
 
-		iluminacion();
+		iluminacion(pluz.px, pluz.py, pluz.pz);
 
 
 		//EIXOS
