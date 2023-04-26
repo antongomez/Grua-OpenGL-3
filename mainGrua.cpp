@@ -127,21 +127,23 @@ void renderizarChan(unsigned int transformLoc, glm::mat4* transform) {
 void iluminacion() {
 
 	// El color del objeto
-	unsigned int colorLoc = glGetUniformLocation(shaderProgram, "objectColor");
-	glUniform3f(colorLoc, 0.0f, 0.3f, 1.0f);
+	//unsigned int colorLoc = glGetUniformLocation(shaderProgram, "objectColor");
+	//glUniform3f(colorLoc, 0.0f, 1.0f, 0.0f);
 
 	// El color de la luz ambiente
-	unsigned int lightLoc = glGetUniformLocation(shaderProgram, "LightColor");
+	unsigned int lightLoc = glGetUniformLocation(shaderProgram, "lightColor");
 	glUniform3f(lightLoc, 0.5f, 0.5f, 0.5f);
 
 	// Luz difusa
 	unsigned int lightPosLoc = glGetUniformLocation(shaderProgram, "lightPos");
-	glUniform3f(lightPosLoc, (float)pluz.px, (float)pluz.py, (float)(pluz.pz+4));
+	//glUniform3f(lightPosLoc, (float)pluz.px, (float)pluz.py, (float)(pluz.pz+4));
+	glUniform3f(lightPosLoc, 0.0f, 4.0f, 0.0f);
 
 	// Luz especular
 
 	// La posicion del usuario/camara (0,0,10) en nuestro caso
 	unsigned int viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
+	glUniform3f(viewPosLoc, 0.0f, 0.0f, 10.0f);
 }
 
 int main()
@@ -235,6 +237,8 @@ int main()
 		// Buscamos a matriz de model no Shader
 		unsigned int transformLoc = glGetUniformLocation(shaderProgram, "transform");
 
+		
+
 		renderizarChan(transformLoc, &transform);
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -246,6 +250,8 @@ int main()
 		brazo1.renderizarObxecto(transformLoc, &transform, &transformTemp, VAOCubo);
 		art2.renderizarObxecto(transformLoc, &transform, &transformTemp, VAOEsfera);
 		brazo2.renderizarObxecto(transformLoc, &transform, &transformTemp, VAOCubo);
+
+
 		// LUZ
 		// Necesito acceder a los valores para colocar la luz
 		double dArray[16] = { 0.0 };
@@ -260,6 +266,7 @@ int main()
 		pluz.pz = (float)dArray[14];
 
 		iluminacion();
+
 
 		//EIXOS
 		/*transform = glm::mat4();
