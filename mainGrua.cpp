@@ -124,7 +124,7 @@ void renderizarChan(unsigned int transformLoc, glm::mat4* transform) {
 }
 
 
-void iluminacion(glm::vec3 luz) {
+void iluminacion(glm::vec4 luz, glm::vec4 dir_luz) {
 
 	// El color del objeto
 	//unsigned int colorLoc = glGetUniformLocation(shaderProgram, "objectColor");
@@ -155,7 +155,8 @@ void iluminacion(glm::vec3 luz) {
 	glUniform3f(viewPosLoc, pos.x, pos.y, pos.z);
 
 	unsigned int luzDirLoc = glGetUniformLocation(shaderProgram, "luzDir");
-	glUniform3f(luzDirLoc, 0.0f, -1.0f, 0.0f);
+	//glUniform3f(luzDirLoc, 0.0f, -1.0f, 0.0f);
+	glUniform3f(luzDirLoc, dir_luz.x, dir_luz.y, dir_luz.z);
 }
 
 int main()
@@ -276,11 +277,15 @@ int main()
 
 		glm::vec4 punta_brazo2 = glm::vec4(0.0f, 0.2f, 0.0f, 1.0f);
 
-		glm::vec4 dir_luz = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		// Para que la luz apunte en la misma direccion que el brazo pequeno
+		//glm::vec4 dir_luz = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+
+		// Para que la luz apunte perpendicular al brazo pequeno
+		glm::vec4 dir_luz = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 
 		punta_brazo2 = transformTemp * punta_brazo2;
 
-		dir_luz = transformTemp * dir_luz;
+		dir_luz = (transformTemp * dir_luz) - punta_brazo2;
 
 		//pluz.px = (float)dArray[12] + dir_brazo2.x;
 		//pluz.py = (float)dArray[13] + dir_brazo2.y;
@@ -293,7 +298,7 @@ int main()
 		//dir_luz = transformTemp * 
 
 		//iluminacion(pluz.px, pluz.py, pluz.pz);
-		iluminacion(punta_brazo2);
+		iluminacion(punta_brazo2, dir_luz);
 
 
 		//EIXOS

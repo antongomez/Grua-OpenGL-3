@@ -26,7 +26,8 @@ void main()
     //vec3 ld = normalize(-lightPos);
     vec3 fd = normalize(vec3((FragPos - lightPos)));
 
-    vec3 ld = luzDir;
+    //vec3 ld = luzDir;
+    vec3 ld = normalize(luzDir);
 
     if (acos(dot(fd,ld)) < radians(15.0)) { 
   	
