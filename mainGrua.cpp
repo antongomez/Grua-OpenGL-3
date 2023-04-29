@@ -129,6 +129,15 @@ void renderizarChan(unsigned int transformLoc, glm::mat4* transform) {
 	}
 }
 
+void iluminacion_solo_ambiente() {
+	// El color de la luz ambiente
+	unsigned int lightLoc = glGetUniformLocation(shaderProgram, "lightColor");
+	glUniform3f(lightLoc, 0.7f, 0.7f, 0.7f);
+
+	// Flag para indicar que solo hay luz ambiente
+	unsigned int soloAmbienteLoc = glGetUniformLocation(shaderProgram, "soloAmbiente");
+	glUniform1i(soloAmbienteLoc, 1);
+}
 
 void iluminacion(glm::vec4 luz, glm::vec4 dir_luz) {
 
@@ -163,6 +172,9 @@ void iluminacion(glm::vec4 luz, glm::vec4 dir_luz) {
 	unsigned int luzDirLoc = glGetUniformLocation(shaderProgram, "luzDir");
 	//glUniform3f(luzDirLoc, 0.0f, -1.0f, 0.0f);
 	glUniform3f(luzDirLoc, dir_luz.x, dir_luz.y, dir_luz.z);
+
+	unsigned int soloAmbienteLoc = glGetUniformLocation(shaderProgram, "soloAmbiente");
+	glUniform1i(soloAmbienteLoc, 0);
 }
 
 int main()
@@ -272,25 +284,36 @@ int main()
 		
 		// ILUMINACION
 
-		// El brazo pequeno mide 0.4, que la distancia del centro al extremo es 0.2
-		glm::vec4 punta_brazo2 = glm::vec4(0.0f, 0.2f, 0.0f, 1.0f);
+		
 
-		glm::vec4 dir_luz;
-
-		if (modo == 0) {
-			// Para que la luz apunte perpendicular al brazo pequeno
-			dir_luz = glm::vec4(0.0f, 0.2f, 1.0f, 1.0f);
+		if (modo == 2) {	// Solo luz ambiente
+			iluminacion_solo_ambiente();
 		}
-		else {
-			// Para que la luz apunte en la misma direccion que el brazo pequeno
-			dir_luz = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+		else {		// Luz ambiente + foco
+
+			// El brazo pequeno mide 0.4, que la distancia del centro al extremo es 0.2
+			glm::vec4 punta_brazo2 = glm::vec4(0.0f, 0.2f, 0.0f, 1.0f);
+
+			glm::vec4 dir_luz;
+
+			if (modo == 0) {
+				// Para que la luz apunte perpendicular al brazo pequeno
+				dir_luz = glm::vec4(0.0f, 0.2f, 1.0f, 1.0f);
+			}
+			else {
+				// Para que la luz apunte en la misma direccion que el brazo pequeno
+				dir_luz = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+			}
+
+			punta_brazo2 = transformTemp * punta_brazo2;
+
+			dir_luz = (transformTemp * dir_luz) - punta_brazo2;
+
+			iluminacion(punta_brazo2, dir_luz);
 		}
 		
-		punta_brazo2 = transformTemp * punta_brazo2;
-
-		dir_luz = (transformTemp * dir_luz) - punta_brazo2;
-
-		iluminacion(punta_brazo2, dir_luz);
+		
+		
 
 
 		//EIXOS
@@ -564,6 +587,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	if ((key == 77 || key == 109) && action == GLFW_PRESS) {
 		if (modo == 0) {
 			modo = 1;
+		}
+		else if (modo == 1) {
+			modo = 2;
 		}
 		else {
 			modo = 0;
