@@ -21,7 +21,8 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#define UNIDADE_GRAO_EN_RADIANS 0.0174533f
+//#define UNIDADE_GRAO_EN_RADIANS 0.00174533f // Realmente es una decima de grado
+#define UNIDADE_GRAO_EN_RADIANS 0.002f // Realmente es un valor arbitrario para ajustar un movimiento fluido
 
 const unsigned int Camara::SCR_WIDTH = 800;
 const unsigned int Camara::SCR_HEIGHT = 800;
@@ -98,8 +99,11 @@ int camara_dcha = 0;
 int modo = 0;
 
 // Texturas
-unsigned int texture;
-//unsigned int texture2;
+unsigned int texturaCesped;
+unsigned int texturaPiscina[16];
+
+int instante = 0;
+int contador = 0;
 
 
 extern GLuint setShaders(const char* nVertx, const char* nFrag);
@@ -134,6 +138,19 @@ void renderizarChan(unsigned int transformLoc, glm::mat4* transform) {
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 		}
 	}
+}
+
+void renderizarPiscina(unsigned int transformLoc, glm::mat4* transform) {
+	// Piscina
+
+		*transform = glm::mat4();
+		*transform = glm::rotate(*transform, (float)(-M_PI / 2.0), glm::vec3(1.0, 0.0, 0.0));
+		*transform = glm::translate(*transform, glm::vec3(1.0f, 0.0f, 0.01f));
+		*transform = glm::scale(*transform, glm::vec3(0.5f, 0.5f, 0.5f));
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(*transform));
+		glBindVertexArray(VAOCadrado);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
 }
 
 void iluminacion_solo_ambiente() {
@@ -180,15 +197,17 @@ void iluminacion(glm::vec4 luz, glm::vec4 dir_luz) {
 	//glUniform3f(luzDirLoc, 0.0f, -1.0f, 0.0f);
 	glUniform3f(luzDirLoc, dir_luz.x, dir_luz.y, dir_luz.z);
 
+	// Desactivamos el flag "soloAmbiente"
 	unsigned int soloAmbienteLoc = glGetUniformLocation(shaderProgram, "soloAmbiente");
 	glUniform1i(soloAmbienteLoc, 0);
 }
 
-void textura1() {
+void cargarTextura(const char* nombreTextura, unsigned int* textura, int formato) {
+
 	// Cargamos y creamos la textura
-	glGenTextures(1, &texture);
+	glGenTextures(1, textura);
 	// Ahora todas las operaciones GL_TEXTURE_2D tienen efecto sobre este objeto texture
-	glBindTexture(GL_TEXTURE_2D, texture);
+	glBindTexture(GL_TEXTURE_2D, *textura);
 	// Establecemos los parámetros de wrapping
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -197,15 +216,16 @@ void textura1() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	// Cargamos la imagen, creamos la textura y generamos mipmaps
 	int width, height, nrChannels;
-	unsigned char* data = stbi_load("texturas/cesped.jpg", &width, &height, &nrChannels, 0);
+	unsigned char* data = stbi_load(nombreTextura, &width, &height, &nrChannels, 0);
 	if (data) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, formato, width, height, 0, formato, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else {
 		std::cout << "Error al cargar la textura" << std::endl;
 	}
 	stbi_image_free(data);
+
 }
 
 int main()
@@ -262,9 +282,51 @@ int main()
 	GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
 
 
-	textura1();
+
+
+	// HACER UN BUCLE MEJOR
+	cargarTextura("texturas/caust00.png", &texturaPiscina[0], GL_RGBA);
+	cargarTextura("texturas/caust01.png", &texturaPiscina[1], GL_RGBA);
+	cargarTextura("texturas/caust02.png", &texturaPiscina[2], GL_RGBA);
+	cargarTextura("texturas/caust03.png", &texturaPiscina[3], GL_RGBA);
+	cargarTextura("texturas/caust04.png", &texturaPiscina[4], GL_RGBA);
+	cargarTextura("texturas/caust05.png", &texturaPiscina[5], GL_RGBA);
+	cargarTextura("texturas/caust06.png", &texturaPiscina[6], GL_RGBA);
+	cargarTextura("texturas/caust07.png", &texturaPiscina[7], GL_RGBA);
+	cargarTextura("texturas/caust08.png", &texturaPiscina[8], GL_RGBA);
+	cargarTextura("texturas/caust09.png", &texturaPiscina[9], GL_RGBA);
+	cargarTextura("texturas/caust10.png", &texturaPiscina[10], GL_RGBA);
+	cargarTextura("texturas/caust11.png", &texturaPiscina[11], GL_RGBA);
+	cargarTextura("texturas/caust12.png", &texturaPiscina[12], GL_RGBA);
+	cargarTextura("texturas/caust13.png", &texturaPiscina[13], GL_RGBA);
+	cargarTextura("texturas/caust14.png", &texturaPiscina[14], GL_RGBA);
+	cargarTextura("texturas/caust15.png", &texturaPiscina[15], GL_RGBA);
+
+
+	cargarTextura("texturas/cesped.jpg", &texturaCesped, GL_RGB);
+
+
 	glUseProgram(shaderProgram);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[0]"), 0);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[1]"), 1);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[2]"), 2);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[3]"), 3);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[4]"), 4);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[5]"), 5);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[6]"), 6);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[7]"), 7);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[8]"), 8);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[9]"), 9);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[10]"), 10);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[11]"), 11);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[12]"), 12);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[13]"), 13);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[14]"), 14);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[15]"), 15);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[16]"), 16);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Lazo da venta mentres non se peche
 	// -----------
@@ -294,12 +356,7 @@ int main()
 
 		glUseProgram(shaderProgram);	
 
-		// TEXTURAS
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);	// CREO QUE SOBRA (DE HECHO CREO QUE VA A MOLESTAR CUANDO PONGA MAS TEXTURAS)
-
-
-
+		
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		// Matriz de model
@@ -310,16 +367,104 @@ int main()
 		unsigned int transformLoc = glGetUniformLocation(shaderProgram, "transform");
 
 
-		// Indicamos que para el suelo utilizamos textura
+		// TEXTURAS
+
+
+		// Indicamos que para el suelo y la piscina utilizamos textura
 		glUniform1i(glGetUniformLocation(shaderProgram, "usarTextura"), 1);
 
+
+		// SUELO
+
+		glActiveTexture(GL_TEXTURE16);
+		glBindTexture(GL_TEXTURE_2D, texturaCesped);
+
+		glUniform1i(glGetUniformLocation(shaderProgram, "piscina"), 0);
+
 		renderizarChan(transformLoc, &transform);
+
+
+		// PISCINA
+
+		switch (instante) {
+			case 0:
+				glActiveTexture(GL_TEXTURE0);
+				break;
+			case 1:
+				glActiveTexture(GL_TEXTURE1);
+				break;
+			case 2:
+				glActiveTexture(GL_TEXTURE2);
+				break;
+			case 3:
+				glActiveTexture(GL_TEXTURE3);
+				break;
+			case 4:
+				glActiveTexture(GL_TEXTURE4);
+				break;
+			case 5:
+				glActiveTexture(GL_TEXTURE5);
+				break;
+			case 6:
+				glActiveTexture(GL_TEXTURE6);
+				break;
+			case 7:
+				glActiveTexture(GL_TEXTURE7);
+				break;
+			case 8:
+				glActiveTexture(GL_TEXTURE8);
+				break;
+			case 9:
+				glActiveTexture(GL_TEXTURE9);
+				break;
+			case 10:
+				glActiveTexture(GL_TEXTURE10);
+				break;
+			case 11:
+				glActiveTexture(GL_TEXTURE11);
+				break;
+			case 12:
+				glActiveTexture(GL_TEXTURE12);
+				break;
+			case 13:
+				glActiveTexture(GL_TEXTURE13);
+				break;
+			case 14:
+				glActiveTexture(GL_TEXTURE14);
+				break;
+			case 15:
+				glActiveTexture(GL_TEXTURE15);
+				break;
+
+		}
+
+		glBindTexture(GL_TEXTURE_2D, texturaPiscina[instante]);
+		glUniform1i(glGetUniformLocation(shaderProgram, "instante"), instante);
+
+		contador++;
+		if (contador == 60) {
+			if (instante == 10) {
+				instante = 12; //Nos saltamos el 11 porque estropea la animacion
+			}
+			else if (instante < 15) {
+				instante++;
+			}
+			else {
+				instante = 0;
+			}
+			contador = 0;
+		}
+
+		glUniform1i(glGetUniformLocation(shaderProgram, "piscina"), 1);
+
+		renderizarPiscina(transformLoc, &transform);
 
 		base.actualizarPosicion(vxInicial, vzInicial, deltaTime);
 
 		// Indicamos que para el resto de objetos no utilizamos textura
 		glUniform1i(glGetUniformLocation(shaderProgram, "usarTextura"), 0);
 
+		// Renderizamos todos los objetos que faltan
 		base.renderizarObxecto(transformLoc, &transform, &transformTemp, VAOCubo);
 		art1.renderizarObxecto(transformLoc, &transform, &transformTemp, VAOEsfera);
 		brazo1.renderizarObxecto(transformLoc, &transform, &transformTemp, VAOCubo);
@@ -356,8 +501,7 @@ int main()
 		}
 		
 		
-		
-
+	
 
 		//EIXOS
 		/*transform = glm::mat4();
@@ -367,11 +511,8 @@ int main()
 
 		glBindVertexArray(0);*/
 
-
 		teclasSimultaneas();
 
-
-	
 		// glfw: swap 
 		// -------------------------------------------------------------------------------
 		glfwSwapBuffers(window);
@@ -503,42 +644,42 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 	// Tecla t: subimos o primeiro brazo da grua
 	if (key == 84 && action != GLFW_RELEASE) {
-		art1.angulo[0] = fmax(art1.angulo[0] - UNIDADE_GRAO_EN_RADIANS, -M_PI / 5.0f);
+		art1.angulo[0] = fmax(art1.angulo[0] - 10*UNIDADE_GRAO_EN_RADIANS, -M_PI / 5.0f);
 	}
 
 	// Tecla g: baixamos o primeiro brazo da grua
 	if (key == 71 && action != GLFW_RELEASE) {
-		art1.angulo[0] = fmin(art1.angulo[0] + UNIDADE_GRAO_EN_RADIANS, M_PI / 5.0f);
+		art1.angulo[0] = fmin(art1.angulo[0] + 10*UNIDADE_GRAO_EN_RADIANS, M_PI / 5.0f);
 	}
 
 	// Tecla f: xiramos a esquerda o primeiro brazo da grua
 	if (key == 70 && action != GLFW_RELEASE) {
-		art1.angulo[1] += 2.0f * UNIDADE_GRAO_EN_RADIANS;
+		art1.angulo[1] += 2.0f * 10 * UNIDADE_GRAO_EN_RADIANS;
 	}
 
 	// Tecla h: xiramos a dereita o primeiro brazo da grua
 	if (key == 72 && action != GLFW_RELEASE) {
-		art1.angulo[1] -= 2.0f * UNIDADE_GRAO_EN_RADIANS;
+		art1.angulo[1] -= 2.0f * 10 * UNIDADE_GRAO_EN_RADIANS;
 	}
 
 	// Tecla i: subimos o segundo brazo da grua
 	if (key == 73 && action != GLFW_RELEASE) {
-		art2.angulo[0] = fmax(art2.angulo[0] - 2.0f * UNIDADE_GRAO_EN_RADIANS, -(2.0f * M_PI) / 3.0f);
+		art2.angulo[0] = fmax(art2.angulo[0] - 2.0f * 10 * UNIDADE_GRAO_EN_RADIANS, -(2.0f * M_PI) / 3.0f);
 	}
 
 	// Tecla k: baixamos o segundo brazo da grua
 	if (key == 75 && action != GLFW_RELEASE) {
-		art2.angulo[0] = fmin(art2.angulo[0] + 2.0f * UNIDADE_GRAO_EN_RADIANS, (2.0f * M_PI) / 3.0f);
+		art2.angulo[0] = fmin(art2.angulo[0] + 2.0f * 10 * UNIDADE_GRAO_EN_RADIANS, (2.0f * M_PI) / 3.0f);
 	}
 
 	// Tecla j: xiramos a esquerda o primeiro brazo da grua
 	if (key == 74 && action != GLFW_RELEASE) {
-		art2.angulo[1] += 2.0f * UNIDADE_GRAO_EN_RADIANS;
+		art2.angulo[1] += 2.0f * 10 * UNIDADE_GRAO_EN_RADIANS;
 	}
 
 	// Tecla l: xiramos a dereita o primeiro brazo da grua
 	if (key == 76 && action != GLFW_RELEASE) {
-		art2.angulo[1] -= 2.0f * UNIDADE_GRAO_EN_RADIANS;
+		art2.angulo[1] -= 2.0f * 10 * UNIDADE_GRAO_EN_RADIANS;
 	}
 
 	// Tecla dereita: xiro da camara en vistaXeral a dereita

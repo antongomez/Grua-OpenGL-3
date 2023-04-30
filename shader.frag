@@ -14,12 +14,19 @@ uniform vec3 lightColor;
 uniform vec3 luzDir;
 uniform int soloAmbiente;
 uniform int usarTextura;
+uniform int piscina;
+uniform int instante;
 
 // texture sampler
-uniform sampler2D texture1;
+uniform sampler2D texturas[17];
 
 void main()
 {
+    int tex = 16;
+    if (piscina == 1){
+        tex = instante;
+    }
+
     if (soloAmbiente == 0){
 
         //vec3 luzDir = vec3(0,-1,0);
@@ -56,7 +63,8 @@ void main()
                 FragColor = vec4(result, 1.0);
             }
             else{
-                vec4 Textura = texture(texture1, TexCoord);
+                vec4 Textura = texture(texturas[tex], TexCoord);
+                Textura = vec4(Textura.rgb, Textura.a * 0.5);
                 FragColor = vec4((ambient + diffuse + specular), 1.0) * Textura;
             }
 
@@ -68,7 +76,8 @@ void main()
                 FragColor = vec4(result, 1.0);
             }
             else{
-                vec4 Textura = texture(texture1, TexCoord);
+                vec4 Textura = texture(texturas[tex], TexCoord);
+                Textura = vec4(Textura.rgb, Textura.a * 0.5);
                 FragColor = vec4((ambient), 1.0) * Textura;
             }
         }
@@ -80,7 +89,9 @@ void main()
             FragColor = vec4(result, 1.0);
         }
         else{
-            FragColor = texture(texture1, TexCoord);
+            vec4 Textura = texture(texturas[tex], TexCoord);
+            Textura = vec4(Textura.rgb, Textura.a * 0.5);
+            FragColor = vec4(lightColor, 1.0) * Textura;
         }
         
     }

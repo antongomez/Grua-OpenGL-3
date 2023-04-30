@@ -3,9 +3,9 @@
 
 #include <glm/glm.hpp>
 
-#define ACELERACION 0.004f
+#define ACELERACION 0.0007f
 //#define ROZAMENTO 0
-#define ROZAMENTO 0.00005f
+#define ROZAMENTO 0.000001f
 
 class ObxectoMobil : public Obxecto
 {
