@@ -8,6 +8,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <math.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include "Obxecto.h"
 #include "ObxectoMobil.h"
 #include "Camara.h"
@@ -94,6 +97,10 @@ int camara_dcha = 0;
 // Modo del foco
 int modo = 0;
 
+// Texturas
+unsigned int texture;
+//unsigned int texture2;
+
 
 extern GLuint setShaders(const char* nVertx, const char* nFrag);
 GLuint shaderProgram;
@@ -177,6 +184,30 @@ void iluminacion(glm::vec4 luz, glm::vec4 dir_luz) {
 	glUniform1i(soloAmbienteLoc, 0);
 }
 
+void textura1() {
+	// Cargamos y creamos la textura
+	glGenTextures(1, &texture);
+	// Ahora todas las operaciones GL_TEXTURE_2D tienen efecto sobre este objeto texture
+	glBindTexture(GL_TEXTURE_2D, texture);
+	// Establecemos los parámetros de wrapping
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// Establecemos los parametros de filtering
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// Cargamos la imagen, creamos la textura y generamos mipmaps
+	int width, height, nrChannels;
+	unsigned char* data = stbi_load("texturas/cesped.jpg", &width, &height, &nrChannels, 0);
+	if (data) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		std::cout << "Error al cargar la textura" << std::endl;
+	}
+	stbi_image_free(data);
+}
+
 int main()
 {
 	// glfw: initialize and configure
@@ -230,6 +261,11 @@ int main()
 	GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");
 	GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
 
+
+	textura1();
+	glUseProgram(shaderProgram);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
+
 	// Lazo da venta mentres non se peche
 	// -----------
 	while (!glfwWindowShouldClose(window))
@@ -258,7 +294,14 @@ int main()
 
 		glUseProgram(shaderProgram);	
 
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		// TEXTURAS
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);	// CREO QUE SOBRA (DE HECHO CREO QUE VA A MOLESTAR CUANDO PONGA MAS TEXTURAS)
+
+
+
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		// Matriz de model
 		glm::mat4 transform = glm::mat4();
@@ -267,11 +310,9 @@ int main()
 		// Buscamos a matriz de model no Shader
 		unsigned int transformLoc = glGetUniformLocation(shaderProgram, "transform");
 
-		
-
 		renderizarChan(transformLoc, &transform);
 
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		base.actualizarPosicion(vxInicial, vzInicial, deltaTime);
 

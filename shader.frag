@@ -3,6 +3,7 @@
 in vec3 Normal;
 in vec3 FragPos;
 in vec3 Color;   
+in vec2 TexCoord;
 
 out vec4 FragColor;
 
@@ -12,6 +13,9 @@ uniform vec3 lightColor;
 //uniform vec3 objectColor;
 uniform vec3 luzDir;
 uniform int soloAmbiente;
+
+// texture sampler
+uniform sampler2D texture1;
 
 void main()
 {
@@ -57,8 +61,10 @@ void main()
     }
 
     else{
-        vec3 result = (lightColor) * Color;
-        FragColor = vec4(result, 1.0);
+        //vec3 result = (lightColor) * Color;
+        //FragColor = vec4(result, 1.0);
+        FragColor = texture(texture1, TexCoord);
+        //FragColor = mix(texture(texture1, TexCoord), texture(texture2, TexCoord), 0.3);
     }
     
 
