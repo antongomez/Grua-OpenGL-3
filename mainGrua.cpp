@@ -121,7 +121,7 @@ void openGlInit() {
 void renderizarChan(unsigned int transformLoc, glm::mat4* transform) {
 	// CHAN
 	float i, j;
-	float escala = 10.0;
+	float escala = 3.0;
 
 	for (i = -2; i <= 2; i += (float)(1.0 / escala)) {
 		for (j = -2; j <= 2; j += (float)(1.0 / escala)) {
@@ -300,7 +300,6 @@ int main()
 
 
 
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		// Matriz de model
@@ -310,11 +309,16 @@ int main()
 		// Buscamos a matriz de model no Shader
 		unsigned int transformLoc = glGetUniformLocation(shaderProgram, "transform");
 
+
+		// Indicamos que para el suelo utilizamos textura
+		glUniform1i(glGetUniformLocation(shaderProgram, "usarTextura"), 1);
+
 		renderizarChan(transformLoc, &transform);
 
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
 		base.actualizarPosicion(vxInicial, vzInicial, deltaTime);
+
+		// Indicamos que para el resto de objetos no utilizamos textura
+		glUniform1i(glGetUniformLocation(shaderProgram, "usarTextura"), 0);
 
 		base.renderizarObxecto(transformLoc, &transform, &transformTemp, VAOCubo);
 		art1.renderizarObxecto(transformLoc, &transform, &transformTemp, VAOEsfera);
@@ -324,8 +328,6 @@ int main()
 
 		
 		// ILUMINACION
-
-		
 
 		if (modo == 2) {	// Solo luz ambiente
 			iluminacion_solo_ambiente();

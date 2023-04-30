@@ -13,6 +13,7 @@ uniform vec3 lightColor;
 //uniform vec3 objectColor;
 uniform vec3 luzDir;
 uniform int soloAmbiente;
+uniform int usarTextura;
 
 // texture sampler
 uniform sampler2D texture1;
@@ -49,22 +50,39 @@ void main()
 	        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16);
 	        vec3 specular = specularStrength * spec * lightColor;
 
-            
-   	        vec3 result = (ambient + diffuse + specular) * Color;
-            FragColor = vec4(result, 1.0);
+
+            if (usarTextura == 0){
+                vec3 result = (ambient + diffuse + specular) * Color;
+                FragColor = vec4(result, 1.0);
+            }
+            else{
+                vec4 Textura = texture(texture1, TexCoord);
+                FragColor = vec4((ambient + diffuse + specular), 1.0) * Textura;
+            }
 
         } 
         else{
-            vec3 result = (ambient) * Color;
-            FragColor = vec4(result, 1.0);
+
+            if (usarTextura == 0){
+                vec3 result = (ambient) * Color;
+                FragColor = vec4(result, 1.0);
+            }
+            else{
+                vec4 Textura = texture(texture1, TexCoord);
+                FragColor = vec4((ambient), 1.0) * Textura;
+            }
         }
     }
 
     else{
-        //vec3 result = (lightColor) * Color;
-        //FragColor = vec4(result, 1.0);
-        FragColor = texture(texture1, TexCoord);
-        //FragColor = mix(texture(texture1, TexCoord), texture(texture2, TexCoord), 0.3);
+        if (usarTextura == 0){
+            vec3 result = (lightColor) * Color;
+            FragColor = vec4(result, 1.0);
+        }
+        else{
+            FragColor = texture(texture1, TexCoord);
+        }
+        
     }
     
 
