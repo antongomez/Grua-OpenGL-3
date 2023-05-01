@@ -165,7 +165,7 @@ void Obxecto::debuxaCubo(unsigned int* VAO) {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	// position vertices
+	// posicion vertices
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
@@ -206,7 +206,7 @@ void Obxecto::debuxaEsfera(unsigned int* VAO) {
 	glEnableVertexAttribArray(2);
 
 	// Texturas
-	// MIENTRAS NO METAMOS TEXTURAS, EL SHADER INTERPRETA ESTO COMO COLOR
+	// Realmente tal y como esta escrito, el shader lo va a interpretar como color
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 

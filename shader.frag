@@ -10,7 +10,6 @@ out vec4 FragColor;
 uniform vec3 viewPos; 
 uniform vec3 lightPos; 
 uniform vec3 lightColor;
-//uniform vec3 objectColor;
 uniform vec3 luzDir;
 uniform int soloAmbiente;
 uniform int usarTextura;
@@ -29,20 +28,18 @@ void main()
 
     if (soloAmbiente == 0){
 
-        //vec3 luzDir = vec3(0,-1,0);
-
         // Ambiente
         float ambientI = 0.5;
         vec3 ambient = ambientI * lightColor;
 
         // angulo de 15 grados
-        //vec3 ld = normalize(-lightPos);
         vec3 fd = normalize(vec3((FragPos - lightPos)));
 
         //vec3 ld = luzDir;
         vec3 ld = normalize(luzDir);
 
         if (acos(dot(fd,ld)) < radians(15.0)) { 
+            // Dentro del foco
   	
             // Difusa
             vec3 norm = normalize(Normal);
@@ -70,6 +67,7 @@ void main()
 
         } 
         else{
+            // Fuera del foco (no hay difusa ni especular)
 
             if (usarTextura == 0){
                 vec3 result = (ambient) * Color;
@@ -83,7 +81,8 @@ void main()
         }
     }
 
-    else{
+    else{   // Modo de iluminacion: solo luz ambiente
+    
         if (usarTextura == 0){
             vec3 result = (lightColor) * Color;
             FragColor = vec4(result, 1.0);

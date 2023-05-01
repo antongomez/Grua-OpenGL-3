@@ -21,12 +21,12 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-//#define UNIDADE_GRAO_EN_RADIANS 0.00174533f // Realmente es una decima de grado
-#define UNIDADE_GRAO_EN_RADIANS 0.002f // Realmente es un valor arbitrario para ajustar un movimiento fluido
+//#define UNIDADE_GRAO_EN_RADIANS 0.0174533f
+// Realmente es un valor arbitrario para ajustar un movimiento fluido
+#define UNIDADE_GRAO_EN_RADIANS 0.002f 
 
 const unsigned int Camara::SCR_WIDTH = 800;
 const unsigned int Camara::SCR_HEIGHT = 800;
-
 
 // Posicion inicial
 typedef struct {
@@ -86,7 +86,6 @@ Camara camara(3.0f, M_PI / 2.0f, M_PI / 4.0f);
 // Para pruebas
 //Camara camara(3.0f, 0.0f, 0.0f);
 
-
 // Flags para controles combinados
 int giro_dcha = 0;
 int giro_izda = 0;
@@ -102,6 +101,7 @@ int modo = 0;
 unsigned int texturaCesped;
 unsigned int texturaPiscina[16];
 
+// Animacion piscia
 int instante = 0;
 int contador = 0;
 
@@ -165,18 +165,12 @@ void iluminacion_solo_ambiente() {
 
 void iluminacion(glm::vec4 luz, glm::vec4 dir_luz) {
 
-	// El color del objeto
-	//unsigned int colorLoc = glGetUniformLocation(shaderProgram, "objectColor");
-	//glUniform3f(colorLoc, 0.0f, 1.0f, 0.0f);
-
-	// El color de la luz ambiente
+	// El color de la luz
 	unsigned int lightLoc = glGetUniformLocation(shaderProgram, "lightColor");
 	glUniform3f(lightLoc, 0.5f, 0.5f, 0.5f);
 
 	// Luz difusa
 	unsigned int lightPosLoc = glGetUniformLocation(shaderProgram, "lightPos");
-	//glUniform3f(lightPosLoc, (float)pluz.px, (float)pluz.py, (float)(pluz.pz+4));
-	//glUniform3f(lightPosLoc, 0.0f, 4.0f, 0.0f);	// Foco estatico
 	glUniform3f(lightPosLoc, luz.x, luz.y, luz.z);
 
 	// Luz especular (depende de la camara)
@@ -193,6 +187,7 @@ void iluminacion(glm::vec4 luz, glm::vec4 dir_luz) {
 	unsigned int viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
 	glUniform3f(viewPosLoc, pos.x, pos.y, pos.z);
 
+	// Direccion de la luz
 	unsigned int luzDirLoc = glGetUniformLocation(shaderProgram, "luzDir");
 	//glUniform3f(luzDirLoc, 0.0f, -1.0f, 0.0f);
 	glUniform3f(luzDirLoc, dir_luz.x, dir_luz.y, dir_luz.z);
@@ -227,6 +222,12 @@ void cargarTextura(const char* nombreTextura, unsigned int* textura, int formato
 	stbi_image_free(data);
 
 }
+
+void texturasPiscina();
+void texShader();
+void activarTexturasPiscina();
+void ajustarAnimacion();
+
 
 int main()
 {
@@ -282,49 +283,20 @@ int main()
 	GLuint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
 
 
+	// Cargamos las texturas de la piscina
+	texturasPiscina();
 
-
-	// HACER UN BUCLE MEJOR
-	cargarTextura("texturas/caust00.png", &texturaPiscina[0], GL_RGBA);
-	cargarTextura("texturas/caust01.png", &texturaPiscina[1], GL_RGBA);
-	cargarTextura("texturas/caust02.png", &texturaPiscina[2], GL_RGBA);
-	cargarTextura("texturas/caust03.png", &texturaPiscina[3], GL_RGBA);
-	cargarTextura("texturas/caust04.png", &texturaPiscina[4], GL_RGBA);
-	cargarTextura("texturas/caust05.png", &texturaPiscina[5], GL_RGBA);
-	cargarTextura("texturas/caust06.png", &texturaPiscina[6], GL_RGBA);
-	cargarTextura("texturas/caust07.png", &texturaPiscina[7], GL_RGBA);
-	cargarTextura("texturas/caust08.png", &texturaPiscina[8], GL_RGBA);
-	cargarTextura("texturas/caust09.png", &texturaPiscina[9], GL_RGBA);
-	cargarTextura("texturas/caust10.png", &texturaPiscina[10], GL_RGBA);
-	cargarTextura("texturas/caust11.png", &texturaPiscina[11], GL_RGBA);
-	cargarTextura("texturas/caust12.png", &texturaPiscina[12], GL_RGBA);
-	cargarTextura("texturas/caust13.png", &texturaPiscina[13], GL_RGBA);
-	cargarTextura("texturas/caust14.png", &texturaPiscina[14], GL_RGBA);
-	cargarTextura("texturas/caust15.png", &texturaPiscina[15], GL_RGBA);
-
-
+	// Cargamos la textura del cesped
 	cargarTextura("texturas/cesped.jpg", &texturaCesped, GL_RGB);
 
 
 	glUseProgram(shaderProgram);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[0]"), 0);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[1]"), 1);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[2]"), 2);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[3]"), 3);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[4]"), 4);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[5]"), 5);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[6]"), 6);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[7]"), 7);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[8]"), 8);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[9]"), 9);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[10]"), 10);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[11]"), 11);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[12]"), 12);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[13]"), 13);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[14]"), 14);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[15]"), 15);
-	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[16]"), 16);
 
+
+	// Pasamos las texturas al shader
+	texShader();
+	
+	// Habilitamos la mezcla de texturas
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -386,74 +358,14 @@ int main()
 
 		// PISCINA
 
-		switch (instante) {
-			case 0:
-				glActiveTexture(GL_TEXTURE0);
-				break;
-			case 1:
-				glActiveTexture(GL_TEXTURE1);
-				break;
-			case 2:
-				glActiveTexture(GL_TEXTURE2);
-				break;
-			case 3:
-				glActiveTexture(GL_TEXTURE3);
-				break;
-			case 4:
-				glActiveTexture(GL_TEXTURE4);
-				break;
-			case 5:
-				glActiveTexture(GL_TEXTURE5);
-				break;
-			case 6:
-				glActiveTexture(GL_TEXTURE6);
-				break;
-			case 7:
-				glActiveTexture(GL_TEXTURE7);
-				break;
-			case 8:
-				glActiveTexture(GL_TEXTURE8);
-				break;
-			case 9:
-				glActiveTexture(GL_TEXTURE9);
-				break;
-			case 10:
-				glActiveTexture(GL_TEXTURE10);
-				break;
-			case 11:
-				glActiveTexture(GL_TEXTURE11);
-				break;
-			case 12:
-				glActiveTexture(GL_TEXTURE12);
-				break;
-			case 13:
-				glActiveTexture(GL_TEXTURE13);
-				break;
-			case 14:
-				glActiveTexture(GL_TEXTURE14);
-				break;
-			case 15:
-				glActiveTexture(GL_TEXTURE15);
-				break;
-
-		}
+		activarTexturasPiscina();
 
 		glBindTexture(GL_TEXTURE_2D, texturaPiscina[instante]);
 		glUniform1i(glGetUniformLocation(shaderProgram, "instante"), instante);
 
-		contador++;
-		if (contador == 60) {
-			if (instante == 10) {
-				instante = 12; //Nos saltamos el 11 porque estropea la animacion
-			}
-			else if (instante < 15) {
-				instante++;
-			}
-			else {
-				instante = 0;
-			}
-			contador = 0;
-		}
+		// Ajustamos la animacion para que sea mas fluida
+		ajustarAnimacion();
+		
 
 		glUniform1i(glGetUniformLocation(shaderProgram, "piscina"), 1);
 
@@ -479,7 +391,7 @@ int main()
 		}
 		else {		// Luz ambiente + foco
 
-			// El brazo pequeno mide 0.4, que la distancia del centro al extremo es 0.2
+			// El brazo pequeno mide 0.4, de modo que la distancia del centro al extremo es 0.2
 			glm::vec4 punta_brazo2 = glm::vec4(0.0f, 0.2f, 0.0f, 1.0f);
 
 			glm::vec4 dir_luz;
@@ -527,6 +439,116 @@ int main()
 
 	glfwTerminate();
 	return 0;
+}
+
+
+void texturasPiscina() {
+	cargarTextura("texturas/caust00.png", &texturaPiscina[0], GL_RGBA);
+	cargarTextura("texturas/caust01.png", &texturaPiscina[1], GL_RGBA);
+	cargarTextura("texturas/caust02.png", &texturaPiscina[2], GL_RGBA);
+	cargarTextura("texturas/caust03.png", &texturaPiscina[3], GL_RGBA);
+	cargarTextura("texturas/caust04.png", &texturaPiscina[4], GL_RGBA);
+	cargarTextura("texturas/caust05.png", &texturaPiscina[5], GL_RGBA);
+	cargarTextura("texturas/caust06.png", &texturaPiscina[6], GL_RGBA);
+	cargarTextura("texturas/caust07.png", &texturaPiscina[7], GL_RGBA);
+	cargarTextura("texturas/caust08.png", &texturaPiscina[8], GL_RGBA);
+	cargarTextura("texturas/caust09.png", &texturaPiscina[9], GL_RGBA);
+	cargarTextura("texturas/caust10.png", &texturaPiscina[10], GL_RGBA);
+	cargarTextura("texturas/caust11.png", &texturaPiscina[11], GL_RGBA);
+	cargarTextura("texturas/caust12.png", &texturaPiscina[12], GL_RGBA);
+	cargarTextura("texturas/caust13.png", &texturaPiscina[13], GL_RGBA);
+	cargarTextura("texturas/caust14.png", &texturaPiscina[14], GL_RGBA);
+	cargarTextura("texturas/caust15.png", &texturaPiscina[15], GL_RGBA);
+}
+
+void texShader() {
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[0]"), 0);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[1]"), 1);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[2]"), 2);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[3]"), 3);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[4]"), 4);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[5]"), 5);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[6]"), 6);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[7]"), 7);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[8]"), 8);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[9]"), 9);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[10]"), 10);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[11]"), 11);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[12]"), 12);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[13]"), 13);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[14]"), 14);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[15]"), 15);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texturas[16]"), 16);
+}
+
+void activarTexturasPiscina() {
+	switch (instante) {
+	case 0:
+		glActiveTexture(GL_TEXTURE0);
+		break;
+	case 1:
+		glActiveTexture(GL_TEXTURE1);
+		break;
+	case 2:
+		glActiveTexture(GL_TEXTURE2);
+		break;
+	case 3:
+		glActiveTexture(GL_TEXTURE3);
+		break;
+	case 4:
+		glActiveTexture(GL_TEXTURE4);
+		break;
+	case 5:
+		glActiveTexture(GL_TEXTURE5);
+		break;
+	case 6:
+		glActiveTexture(GL_TEXTURE6);
+		break;
+	case 7:
+		glActiveTexture(GL_TEXTURE7);
+		break;
+	case 8:
+		glActiveTexture(GL_TEXTURE8);
+		break;
+	case 9:
+		glActiveTexture(GL_TEXTURE9);
+		break;
+	case 10:
+		glActiveTexture(GL_TEXTURE10);
+		break;
+	case 11:
+		glActiveTexture(GL_TEXTURE11);
+		break;
+	case 12:
+		glActiveTexture(GL_TEXTURE12);
+		break;
+	case 13:
+		glActiveTexture(GL_TEXTURE13);
+		break;
+	case 14:
+		glActiveTexture(GL_TEXTURE14);
+		break;
+	case 15:
+		glActiveTexture(GL_TEXTURE15);
+		break;
+
+	}
+}
+
+void ajustarAnimacion() {
+	contador++;
+	if (contador == 60) {
+		if (instante == 10) {
+			instante = 12; //Nos saltamos el 11 porque estropea la animacion
+		}
+		else if (instante < 15) {
+			instante++;
+		}
+		else {
+			instante = 0;
+		}
+		contador = 0;
+	}
 }
 
 void processInput(GLFWwindow* window)

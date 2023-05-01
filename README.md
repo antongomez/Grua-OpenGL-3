@@ -22,3 +22,4 @@ Grúa básica feita con esferas e cubos con OpenGL 3.3 e Glad
 - tecla_dereita: xirar á dereita cámara xeral
 - +: achegar cámara xeral
 - -: alonxar cámara xeral
+- m: cambiar modo de iluminación (foco perpendicular ao brazo, foco na dirección do brazo, só luz ambiente)
