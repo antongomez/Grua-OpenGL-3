@@ -411,9 +411,6 @@ int main()
 
 			iluminacion(punta_brazo2, dir_luz);
 		}
-		
-		
-	
 
 		//EIXOS
 		/*transform = glm::mat4();
